@@ -1,22 +1,21 @@
 import { supabase } from './supabaseClient';
 import { UserProfile } from '../types';
 
-const USER_ID_KEY = 'tenderai_user_id';
-
-// Helper to get or create a stable User ID for this browser session
-// In a full auth app, this would come from supabase.auth.user()
-export const getUserId = (): string => {
-    let id = localStorage.getItem(USER_ID_KEY);
-    if (!id) {
-        id = 'usr_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem(USER_ID_KEY, id);
-    }
-    return id;
-};
-
 export const userService = {
+    // Helper to get current authenticated user ID
+    getCurrentUserId: async (): Promise<string | null> => {
+        const { data: { session } } = await supabase.auth.getSession();
+        return session?.user?.id || null;
+    },
+
     getCurrentProfile: async (): Promise<UserProfile | null> => {
-        const userId = getUserId();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session || !session.user) {
+            return null;
+        }
+
+        const userId = session.user.id;
         
         const { data, error } = await supabase
             .from('profiles')
@@ -31,19 +30,25 @@ export const userService = {
         // Map snake_case DB columns to camelCase UserProfile type
         return {
             id: data.id,
-            companyName: data.company_name,
-            specialization: data.specialization,
-            cpvCodes: data.cpv_codes,
-            negativeKeywords: data.negative_keywords,
-            targetDepartments: data.target_departments,
-            scope: data.scope,
-            subscriptionStatus: data.subscription_status,
-            savedDashboardFilters: data.saved_dashboard_filters
+            companyName: data.company_name || "",
+            specialization: data.specialization || "",
+            cpvCodes: data.cpv_codes || "",
+            negativeKeywords: data.negative_keywords || "",
+            targetDepartments: data.target_departments || "",
+            scope: data.scope || "France",
+            subscriptionStatus: data.subscription_status || "Trial",
+            savedDashboardFilters: data.saved_dashboard_filters || undefined
         } as UserProfile;
     },
 
     saveProfile: async (profile: Partial<UserProfile>): Promise<void> => {
-        const userId = getUserId();
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session || !session.user) {
+            throw new Error("User not authenticated");
+        }
+
+        const userId = session.user.id;
         
         // Map camelCase to snake_case for DB
         const dbPayload: any = {
@@ -64,12 +69,12 @@ export const userService = {
 
         if (error) {
             console.error('Error saving profile:', error);
-            throw error;
+            throw new Error(error.message);
         }
     },
 
-    resetLocalUser: () => {
-        localStorage.removeItem(USER_ID_KEY);
-        // We don't delete from DB in this demo reset, just generate a new ID to start fresh
+    resetLocalUser: async () => {
+        // Sign out from Supabase
+        await supabase.auth.signOut();
     }
 };

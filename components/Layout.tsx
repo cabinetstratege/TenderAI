@@ -1,5 +1,6 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { userService } from '../services/userService';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -8,7 +9,8 @@ import {
   CreditCard, 
   ShieldAlert,
   Menu,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -33,6 +35,12 @@ const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: stri
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await userService.resetLocalUser();
+    // navigate('/auth'); // Handled by App.tsx state change
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -53,8 +61,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <NavItem to="/pricing" icon={CreditCard} label="Plans & Tarifs" />
         </nav>
 
-        <div className="mt-auto pt-4 border-t border-slate-700">
+        <div className="mt-auto pt-4 border-t border-slate-700 space-y-1">
            <NavItem to="/admin" icon={ShieldAlert} label="Administration" />
+           <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200"
+           >
+              <LogOut size={20} />
+              <span className="font-medium">Déconnexion</span>
+           </button>
         </div>
       </aside>
 
@@ -75,6 +90,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/stats" icon={BarChart2} label="Statistiques" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/profile" icon={Building2} label="Profil Entreprise" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/pricing" icon={CreditCard} label="Plans & Tarifs" /></div>
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200 mt-4 border-t border-slate-700"
+           >
+              <LogOut size={20} />
+              <span className="font-medium">Déconnexion</span>
+           </button>
           </nav>
         </div>
       )}

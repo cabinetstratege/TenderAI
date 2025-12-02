@@ -1,7 +1,6 @@
 import { Tender, UserProfile, UserInteraction, TenderStatus, AIStrategyAnalysis } from '../types';
 import { MOCK_TENDERS } from './mockData';
 import { supabase } from './supabaseClient';
-import { getUserId } from './userService';
 
 const BOAMP_API_URL = "https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records";
 const STORAGE_TENDERS_CACHE_KEY = 'tenderai_tenders_cache';
@@ -51,7 +50,11 @@ const saveToTendersCache = (tender: Tender) => {
 
 // --- SUPABASE HELPERS ---
 const fetchUserInteractions = async (): Promise<UserInteraction[]> => {
-    const userId = getUserId();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return [];
+    
+    const userId = session.user.id;
+
     const { data, error } = await supabase
         .from('user_interactions')
         .select('*')
@@ -108,6 +111,8 @@ export const tenderService = {
 
         const data = await response.json();
         
+        if (!data.results) return [];
+
         // 2. Mapper les résultats API vers notre modèle Tender
         const tenders: Tender[] = data.results.map((record: any) => {
             let details: any = {};
@@ -164,11 +169,7 @@ export const tenderService = {
       );
 
       const results = workspaceInteractions.map(interaction => {
-          // Try to find in cache
           let tender = tenderCache.find(t => t.id === interaction.tenderId);
-          
-          // If not in cache (e.g. data cleared), we use a placeholder or should fetch from API by ID.
-          // For this demo, we assume cache hits or return partial object if we stored it in DB (we don't yet).
           if (!tender) {
               return null;
           }
@@ -185,7 +186,10 @@ export const tenderService = {
     }
 
     // 2. Upsert to Supabase
-    const userId = getUserId();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const userId = session.user.id;
+
     const payload: any = {
         user_id: userId,
         tender_id: tenderId,
@@ -195,16 +199,14 @@ export const tenderService = {
 
     const { error } = await supabase
         .from('user_interactions')
-        .upsert(payload, { onConflict: 'user_id, tender_id' }); // Requires DB constraint
+        .upsert(payload, { onConflict: 'user_id, tender_id' });
 
-    // Fallback: If upsert logic is tricky without explicit constraint setup on Supabase side, 
-    // we might need to check existance. But usually PK handles it.
     if (error) console.error("Supabase update error", error);
   },
 
   getTenderById: async (id: string): Promise<{tender: Tender, interaction?: UserInteraction} | null> => {
       const cache = getStoredTendersCache();
-      const interactions = await fetchUserInteractions(); // We could optimize this to fetch single interaction
+      const interactions = await fetchUserInteractions(); 
       
       const tender = cache.find(t => t.id === id);
       const interaction = interactions.find(i => i.tenderId === id);
@@ -214,16 +216,17 @@ export const tenderService = {
   },
 
   saveAnalysis: async (tenderId: string, analysis: AIStrategyAnalysis) => {
-      const userId = getUserId();
-      // We need to make sure the row exists, usually analysis is done on viewed/saved tender
-      // We perform an update.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const userId = session.user.id;
+      
       const { error } = await supabase
         .from('user_interactions')
         .upsert({
             user_id: userId,
             tender_id: tenderId,
             ai_analysis_result: analysis
-        }); // Note: if row doesn't exist (status null), it creates it.
+        });
       
       if (error) console.error("Error saving analysis", error);
   }

@@ -1,52 +1,55 @@
 import React, { useState } from 'react';
 import { MOCK_TENDERS, ADMIN_STATS } from '../services/mockData';
 import { userService } from '../services/userService';
-import { Edit, Trash, Users, Activity, FileText, TrendingUp, RefreshCw } from 'lucide-react';
+import { Edit, Trash, Users, Activity, FileText, TrendingUp, RefreshCw, LogOut } from 'lucide-react';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ao' | 'users' | 'analytics'>('ao');
 
-  const handleReset = () => {
-      userService.resetLocalUser();
-      window.location.reload();
+  const handleLogout = async () => {
+      await userService.resetLocalUser(); // Signs out supabase
+      // Router will detect auth change and redirect to /auth
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-slate-900">Administration SaaS</h2>
-        <div className="flex bg-slate-100 rounded-lg p-1">
-             <button 
-                onClick={() => setActiveTab('ao')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'ao' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-             >
-                 Gestion AO
-             </button>
-             <button 
-                onClick={() => setActiveTab('users')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-             >
-                 Utilisateurs
-             </button>
-             <button 
-                onClick={() => setActiveTab('analytics')}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'analytics' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-             >
-                 Analytics Globaux
-             </button>
+        
+        <div className="flex items-center gap-4">
+            <div className="flex bg-slate-100 rounded-lg p-1">
+                 <button 
+                    onClick={() => setActiveTab('ao')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'ao' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                 >
+                     Gestion AO
+                 </button>
+                 <button 
+                    onClick={() => setActiveTab('users')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                 >
+                     Utilisateurs
+                 </button>
+                 <button 
+                    onClick={() => setActiveTab('analytics')}
+                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'analytics' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                 >
+                     Analytics Globaux
+                 </button>
+            </div>
+
+            <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 shadow-sm transition-colors"
+            >
+                <LogOut size={16}/> Déconnexion
+            </button>
         </div>
       </div>
 
       {activeTab === 'ao' && (
         <div className="space-y-4">
             <div className="flex justify-end gap-2">
-                <button 
-                    onClick={handleReset}
-                    className="flex items-center gap-2 bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200"
-                    title="Efface le profil local et relance le Wizard"
-                >
-                    <RefreshCw size={16}/> Reset Demo (Onboarding)
-                </button>
                 <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800">
                 + Injecter AO Brut
                 </button>

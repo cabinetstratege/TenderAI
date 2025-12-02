@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -9,27 +9,15 @@ import Profile from './pages/Profile';
 import Pricing from './pages/Pricing';
 import Admin from './pages/Admin';
 import Welcome from './pages/Welcome';
-import { userService } from './services/userService';
-import { UserProfile } from './types';
+import Auth from './pages/Auth';
+import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
-// Wrapper to handle conditional redirects based on async profile load
 const AppRoutes = () => {
     const location = useLocation();
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { session, profile, loading } = useAuth();
 
-    useEffect(() => {
-        const checkUser = async () => {
-            setIsLoading(true);
-            const userProfile = await userService.getCurrentProfile();
-            setProfile(userProfile);
-            setIsLoading(false);
-        };
-        checkUser();
-    }, []);
-
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="h-screen flex items-center justify-center bg-slate-50">
                 <Loader2 className="animate-spin text-primary" size={48} />
@@ -37,24 +25,31 @@ const AppRoutes = () => {
         );
     }
 
-    const isNew = !profile;
+    // SCENARIO 1: Not Authenticated -> Force Auth Page
+    if (!session && location.pathname !== '/auth') {
+        return <Navigate to="/auth" replace />;
+    }
 
-    // 1. If user is NEW and NOT on welcome page -> Force Welcome
-    if (isNew && location.pathname !== '/welcome') {
+    // SCENARIO 2: Authenticated but No Profile -> Force Welcome
+    const hasProfile = !!profile;
+    if (session && !hasProfile && location.pathname !== '/welcome' && location.pathname !== '/auth') {
         return <Navigate to="/welcome" replace />;
     }
 
-    // 2. If user is NOT NEW (Configured) and tries to access Welcome -> Force Dashboard
-    if (!isNew && location.pathname === '/welcome') {
+    // SCENARIO 3: Authenticated AND Has Profile -> Prevent access to Welcome or Auth
+    if (session && hasProfile && (location.pathname === '/welcome' || location.pathname === '/auth')) {
         return <Navigate to="/" replace />;
     }
 
     return (
         <Routes>
-            {/* Standalone Route (No Layout) */}
+            {/* Public/Auth Routes */}
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* Standalone Route (Onboarding) */}
             <Route path="/welcome" element={<Welcome />} />
 
-            {/* Main App Routes (With Layout) */}
+            {/* Main App Routes (Protected) */}
             <Route path="/*" element={
                 <Layout>
                     <Routes>

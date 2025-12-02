@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
 import { generateProfileSuggestions } from '../services/geminiService';
+import { useAuth } from '../context/AuthContext';
 import { UserProfile } from '../types';
-import { ArrowRight, Check, Sparkles, Building2, Target, Map, Loader2 } from 'lucide-react';
+import { ArrowRight, Check, Sparkles, Loader2 } from 'lucide-react';
 
 const Welcome: React.FC = () => {
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
+  
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
@@ -19,7 +22,6 @@ const Welcome: React.FC = () => {
     targetDepartments: '',
     scope: 'France',
     subscriptionStatus: 'Active',
-    // savedDashboardFilters will be initialized empty by default in type or logic
   });
 
   // STEP 2: AI Generation
@@ -52,18 +54,17 @@ const Welcome: React.FC = () => {
         await userService.saveProfile(finalProfile);
         
         // 2. Simulate "Scanning BOAMP" delay
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Navigate to dashboard. App.tsx will reload the profile.
-        // We use window.location.reload to ensure the App component remounts and fetches profile from DB
-        // Or we can just navigate and rely on App state update if we were lifting state up.
-        // Since App.tsx fetches on mount, simple navigation might not trigger re-fetch if App doesn't unmount.
-        // But in our App.tsx, we check profile on mount. Let's force a reload or update state context.
-        // For simplicity in this structure:
-        window.location.reload(); 
+        // 3. REFRESH CONTEXT: Crucial step to let App know profile exists now
+        await refreshProfile();
+
+        // 4. Navigate
+        navigate('/');
     } catch (e) {
         console.error("Error saving profile", e);
         setIsFinalizing(false);
+        alert("Erreur lors de la sauvegarde du profil. Veuillez vérifier votre connexion.");
     }
   };
 
