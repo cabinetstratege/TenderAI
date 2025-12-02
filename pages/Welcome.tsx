@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { saveUserProfile, MOCK_PROFILE } from '../services/mockData';
+import { userService } from '../services/userService';
 import { generateProfileSuggestions } from '../services/geminiService';
 import { UserProfile } from '../types';
 import { ArrowRight, Check, Sparkles, Building2, Target, Map, Loader2 } from 'lucide-react';
@@ -12,7 +12,6 @@ const Welcome: React.FC = () => {
   const [isFinalizing, setIsFinalizing] = useState(false);
 
   const [formData, setFormData] = useState<Partial<UserProfile>>({
-    id: 'usr_' + Math.random().toString(36).substr(2, 9),
     companyName: '',
     specialization: '',
     cpvCodes: '',
@@ -20,7 +19,7 @@ const Welcome: React.FC = () => {
     targetDepartments: '',
     scope: 'France',
     subscriptionStatus: 'Active',
-    savedDashboardFilters: MOCK_PROFILE.savedDashboardFilters // Keep default empty filters
+    // savedDashboardFilters will be initialized empty by default in type or logic
   });
 
   // STEP 2: AI Generation
@@ -43,24 +42,29 @@ const Welcome: React.FC = () => {
   const handleFinish = async () => {
     setIsFinalizing(true);
     
-    // 1. Save Profile
-    // Ensure all fields are filled with defaults if empty
-    const finalProfile: UserProfile = {
-        ...MOCK_PROFILE,
-        ...formData as UserProfile,
+    // 1. Save Profile via Supabase
+    const finalProfile: Partial<UserProfile> = {
+        ...formData,
         targetDepartments: formData.targetDepartments || '75, 92, 93, 94', // Default IDF if empty
     };
     
-    saveUserProfile(finalProfile);
-
-    // 2. Simulate "Scanning BOAMP" delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    setIsFinalizing(false);
-    
-    // Navigate to dashboard. 
-    // App.tsx routing logic will detect isNewUser() is false and allow access to "/"
-    navigate('/');
+    try {
+        await userService.saveProfile(finalProfile);
+        
+        // 2. Simulate "Scanning BOAMP" delay
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        // Navigate to dashboard. App.tsx will reload the profile.
+        // We use window.location.reload to ensure the App component remounts and fetches profile from DB
+        // Or we can just navigate and rely on App state update if we were lifting state up.
+        // Since App.tsx fetches on mount, simple navigation might not trigger re-fetch if App doesn't unmount.
+        // But in our App.tsx, we check profile on mount. Let's force a reload or update state context.
+        // For simplicity in this structure:
+        window.location.reload(); 
+    } catch (e) {
+        console.error("Error saving profile", e);
+        setIsFinalizing(false);
+    }
   };
 
   // --- RENDERERS ---

@@ -1,45 +1,37 @@
 import { Tender, UserProfile, UserInteraction, TenderStatus, AIStrategyAnalysis } from '../types';
-import { MOCK_INTERACTIONS, MOCK_TENDERS } from './mockData';
+import { MOCK_TENDERS } from './mockData';
+import { supabase } from './supabaseClient';
+import { getUserId } from './userService';
 
 const BOAMP_API_URL = "https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records";
-const STORAGE_INTERACTIONS_KEY = 'tenderai_interactions';
 const STORAGE_TENDERS_CACHE_KEY = 'tenderai_tenders_cache';
 
 /**
  * Calcul basique d'un score de compatibilité (Simulation de l'IA côté client)
- * Compare les mots clés de la spécialisation avec le titre et le résumé de l'AO.
  */
 const calculateLocalScore = (tenderText: string, profile: UserProfile): number => {
-    let score = 50; // Score de base
+    let score = 50; 
     const text = tenderText.toLowerCase();
     
-    // Bonus pour mots clés de spécialisation
-    const specKeywords = profile.specialization.toLowerCase().split(' ').filter(w => w.length > 4);
-    specKeywords.forEach(kw => {
-        if (text.includes(kw)) score += 10;
-    });
+    if (profile.specialization) {
+        const specKeywords = profile.specialization.toLowerCase().split(' ').filter(w => w.length > 4);
+        specKeywords.forEach(kw => {
+            if (text.includes(kw)) score += 10;
+        });
+    }
 
-    // Malus pour mots clés négatifs
-    const negKeywords = profile.negativeKeywords.toLowerCase().split(',').map(s => s.trim()).filter(s => s);
-    negKeywords.forEach(kw => {
-        if (text.includes(kw)) score -= 40;
-    });
+    if (profile.negativeKeywords) {
+        const negKeywords = profile.negativeKeywords.toLowerCase().split(',').map(s => s.trim()).filter(s => s);
+        negKeywords.forEach(kw => {
+            if (text.includes(kw)) score -= 40;
+        });
+    }
 
-    // Clamp score 0-100
     return Math.max(5, Math.min(99, score));
 };
 
-// Helpers for persistence
-const getStoredInteractions = (): UserInteraction[] => {
-    const stored = localStorage.getItem(STORAGE_INTERACTIONS_KEY);
-    return stored ? JSON.parse(stored) : [...MOCK_INTERACTIONS];
-};
-
-const saveStoredInteractions = (interactions: UserInteraction[]) => {
-    localStorage.setItem(STORAGE_INTERACTIONS_KEY, JSON.stringify(interactions));
-};
-
-// Cache to store full tender objects (since we don't have a real DB to query by ID later)
+// --- CACHE HELPERS (Local Only for content) ---
+// We still cache full tender objects locally because Supabase only stores IDs and Status.
 const getStoredTendersCache = (): Tender[] => {
     const stored = localStorage.getItem(STORAGE_TENDERS_CACHE_KEY);
     return stored ? JSON.parse(stored) : [...MOCK_TENDERS];
@@ -47,30 +39,52 @@ const getStoredTendersCache = (): Tender[] => {
 
 const saveToTendersCache = (tender: Tender) => {
     const cache = getStoredTendersCache();
-    if (!cache.find(t => t.id === tender.id)) {
+    // Update or push
+    const index = cache.findIndex(t => t.id === tender.id);
+    if (index >= 0) {
+        cache[index] = tender;
+    } else {
         cache.push(tender);
-        localStorage.setItem(STORAGE_TENDERS_CACHE_KEY, JSON.stringify(cache));
     }
+    localStorage.setItem(STORAGE_TENDERS_CACHE_KEY, JSON.stringify(cache));
+};
+
+// --- SUPABASE HELPERS ---
+const fetchUserInteractions = async (): Promise<UserInteraction[]> => {
+    const userId = getUserId();
+    const { data, error } = await supabase
+        .from('user_interactions')
+        .select('*')
+        .eq('user_id', userId);
+    
+    if (error) {
+        console.error("Error fetching interactions", error);
+        return [];
+    }
+
+    // Map DB to Type
+    return data.map((row: any) => ({
+        tenderId: row.tender_id,
+        status: row.status as TenderStatus,
+        internalNotes: row.internal_notes,
+        customReminderDate: row.custom_reminder_date,
+        aiAnalysisResult: row.ai_analysis_result
+    }));
 };
 
 export const tenderService = {
   
-  /**
-   * Récupère les AO depuis l'API OpenDataSoft du BOAMP
-   * Filtre basé sur les départements du profil utilisateur.
-   */
   getAuthorizedTenders: async (user: UserProfile): Promise<Tender[]> => {
     try {
-        const interactions = getStoredInteractions();
+        const interactions = await fetchUserInteractions();
         const blacklist = interactions
             .filter(i => i.status === TenderStatus.BLACKLISTED || i.status === TenderStatus.SAVED || i.status === TenderStatus.WON || i.status === TenderStatus.LOST)
             .map(i => i.tenderId);
 
         // 1. Construire la requête API
         const depts = user.targetDepartments
-            .split(',')
-            .map(d => d.trim())
-            .filter(d => d.length > 0);
+            ? user.targetDepartments.split(',').map(d => d.trim()).filter(d => d.length > 0)
+            : [];
         
         let whereClause = '';
         if (user.scope !== 'France' && user.scope !== 'Europe' && depts.length > 0) {
@@ -129,10 +143,10 @@ export const tenderService = {
             } as Tender;
         });
 
-        // Cache fetched tenders to ensure detail view works even if not saved yet
+        // Cache fetched tenders
         tenders.forEach(t => saveToTendersCache(t));
 
-        // 3. Filtrer les AO déjà traités (Sauvegardés, Blacklistés, Gagnés...)
+        // 3. Filtrer les AO déjà traités
         return tenders.filter(t => !blacklist.includes(t.id));
 
     } catch (error) {
@@ -141,62 +155,56 @@ export const tenderService = {
     }
   },
 
-  /**
-   * Récupère la liste des AO sauvegardés (Mes Appels d'Offres)
-   * Simule la requête JOIN SQL : SELECT * FROM Tenders JOIN Interactions WHERE Status = 'SAVED'
-   */
   getSavedTenders: async (): Promise<{tender: Tender, interaction: UserInteraction}[]> => {
-      const interactions = getStoredInteractions();
+      const interactions = await fetchUserInteractions();
       const tenderCache = getStoredTendersCache();
 
-      // Filter interactions for Saved/Won/Lost (Everything in "My Tenders" workspace)
       const workspaceInteractions = interactions.filter(i => 
           [TenderStatus.SAVED, TenderStatus.WON, TenderStatus.LOST].includes(i.status)
       );
 
-      // Join with Tender Data
       const results = workspaceInteractions.map(interaction => {
-          const tender = tenderCache.find(t => t.id === interaction.tenderId);
-          if (!tender) return null;
+          // Try to find in cache
+          let tender = tenderCache.find(t => t.id === interaction.tenderId);
+          
+          // If not in cache (e.g. data cleared), we use a placeholder or should fetch from API by ID.
+          // For this demo, we assume cache hits or return partial object if we stored it in DB (we don't yet).
+          if (!tender) {
+              return null;
+          }
           return { tender, interaction };
       }).filter(item => item !== null) as {tender: Tender, interaction: UserInteraction}[];
 
       return results;
   },
 
-  /**
-   * Sauvegarde ou met à jour une interaction
-   * Si 'tender' est fourni, il est mis en cache pour persistance (Simulation DB)
-   */
   updateInteraction: async (tenderId: string, status: TenderStatus, notes?: string, tenderObject?: Tender): Promise<void> => {
-    console.log(`[API] Interaction updated for ${tenderId}: ${status}`);
-    
-    // 1. Cache the full object if provided (Essential for "Save" feature from API list)
+    // 1. Cache locally
     if (tenderObject) {
         saveToTendersCache(tenderObject);
     }
 
-    // 2. Update Interaction Table
-    const interactions = getStoredInteractions();
-    const existingIndex = interactions.findIndex(i => i.tenderId === tenderId);
+    // 2. Upsert to Supabase
+    const userId = getUserId();
+    const payload: any = {
+        user_id: userId,
+        tender_id: tenderId,
+        status: status,
+    };
+    if (notes !== undefined) payload.internal_notes = notes;
 
-    if (existingIndex >= 0) {
-        interactions[existingIndex].status = status;
-        if (notes !== undefined) interactions[existingIndex].internalNotes = notes;
-    } else {
-        interactions.push({ tenderId, status, internalNotes: notes });
-    }
+    const { error } = await supabase
+        .from('user_interactions')
+        .upsert(payload, { onConflict: 'user_id, tender_id' }); // Requires DB constraint
 
-    saveStoredInteractions(interactions);
+    // Fallback: If upsert logic is tricky without explicit constraint setup on Supabase side, 
+    // we might need to check existance. But usually PK handles it.
+    if (error) console.error("Supabase update error", error);
   },
 
-  /**
-   * Retrieve a single tender by ID (for Detail Page)
-   * Checks Cache first.
-   */
   getTenderById: async (id: string): Promise<{tender: Tender, interaction?: UserInteraction} | null> => {
       const cache = getStoredTendersCache();
-      const interactions = getStoredInteractions();
+      const interactions = await fetchUserInteractions(); // We could optimize this to fetch single interaction
       
       const tender = cache.find(t => t.id === id);
       const interaction = interactions.find(i => i.tenderId === id);
@@ -205,22 +213,18 @@ export const tenderService = {
       return { tender, interaction };
   },
 
-  /**
-   * Persist AI Analysis result
-   */
   saveAnalysis: async (tenderId: string, analysis: AIStrategyAnalysis) => {
-      const interactions = getStoredInteractions();
-      const index = interactions.findIndex(i => i.tenderId === tenderId);
+      const userId = getUserId();
+      // We need to make sure the row exists, usually analysis is done on viewed/saved tender
+      // We perform an update.
+      const { error } = await supabase
+        .from('user_interactions')
+        .upsert({
+            user_id: userId,
+            tender_id: tenderId,
+            ai_analysis_result: analysis
+        }); // Note: if row doesn't exist (status null), it creates it.
       
-      if (index >= 0) {
-          interactions[index].aiAnalysisResult = analysis;
-          saveStoredInteractions(interactions);
-      } else {
-          // If no interaction exists yet (viewing unsaved tender), create a temporary one or handle logic
-          // For now, we assume strategy is mostly for saved/interested tenders.
-          // But to be safe, we create an interaction with TODO status if missing
-          interactions.push({ tenderId, status: TenderStatus.TODO, aiAnalysisResult: analysis });
-          saveStoredInteractions(interactions);
-      }
+      if (error) console.error("Error saving analysis", error);
   }
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tenderService } from '../services/tenderService';
 import { chatWithTender, generateStrategicAnalysis } from '../services/geminiService';
-import { getUserProfile } from '../services/mockData';
+import { userService } from '../services/userService';
 import { Tender, UserInteraction, TenderStatus, AIStrategyAnalysis } from '../types';
 import { 
   ArrowLeft, Calendar, MapPin, Building, ExternalLink, Euro, 
@@ -45,7 +45,13 @@ const TenderDetail: React.FC = () => {
   const handleGenerateStrategy = async () => {
       if (!data?.tender) return;
       setIsAnalyzing(true);
-      const profile = getUserProfile();
+      
+      const profile = await userService.getCurrentProfile();
+      if (!profile) {
+          setIsAnalyzing(false);
+          return;
+      }
+
       const result = await generateStrategicAnalysis(data.tender, profile);
       
       if (result) {

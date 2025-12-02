@@ -1,11 +1,15 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { MOCK_PROFILE } from '../services/mockData';
 import { tenderService } from '../services/tenderService';
+import { userService } from '../services/userService';
 import TenderCard from '../components/TenderCard';
 import { Search, Filter, Save, RotateCcw, SlidersHorizontal, Loader2, X } from 'lucide-react';
-import { TenderStatus, DashboardFilters, Tender } from '../types';
+import { TenderStatus, DashboardFilters, Tender, UserProfile } from '../types';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+    userProfile: UserProfile | null;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
   // State for Data (Layer 1 Output)
   const [authorizedTenders, setAuthorizedTenders] = useState<Tender[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,15 +30,16 @@ const Dashboard: React.FC = () => {
   // 1. INITIALIZATION & DATA FETCHING (Backend Layer)
   useEffect(() => {
     const initDashboard = async () => {
+      if (!userProfile) return;
       setIsLoading(true);
       try {
-        // Load Saved Filters if any
-        if (MOCK_PROFILE.savedDashboardFilters) {
-          setFilters(MOCK_PROFILE.savedDashboardFilters);
+        // Load Saved Filters if any from Profile
+        if (userProfile.savedDashboardFilters) {
+          setFilters(userProfile.savedDashboardFilters);
         }
 
         // Call "API" to get authorized tenders
-        const data = await tenderService.getAuthorizedTenders(MOCK_PROFILE);
+        const data = await tenderService.getAuthorizedTenders(userProfile);
         setAuthorizedTenders(data);
       } catch (error) {
         console.error("Failed to fetch tenders", error);
@@ -44,7 +49,7 @@ const Dashboard: React.FC = () => {
     };
 
     initDashboard();
-  }, []);
+  }, [userProfile]);
 
   // 2. ACTION HANDLERS
   const handleStatusChange = async (tender: Tender, status: TenderStatus) => {
@@ -52,15 +57,19 @@ const Dashboard: React.FC = () => {
     if (status === TenderStatus.BLACKLISTED || status === TenderStatus.SAVED) {
       setAuthorizedTenders(prev => prev.filter(t => t.id !== tender.id));
     }
-    // Call API (simulated) - Passing full tender to cache it
+    // Call API 
     await tenderService.updateInteraction(tender.id, status, undefined, tender);
   };
 
-  const handleSaveFilters = () => {
-    // Simulate API call to save user profile preferences
-    MOCK_PROFILE.savedDashboardFilters = filters;
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+  const handleSaveFilters = async () => {
+    // Save to Supabase via userService
+    try {
+        await userService.saveProfile({ savedDashboardFilters: filters });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    } catch (e) {
+        console.error("Error saving filters", e);
+    }
   };
 
   const handleResetFilters = () => {
@@ -114,6 +123,8 @@ const Dashboard: React.FC = () => {
     });
   }, [authorizedTenders, filters]);
 
+  if (!userProfile) return null;
+
   return (
     <div className="space-y-6">
       <header className="space-y-4">
@@ -121,7 +132,7 @@ const Dashboard: React.FC = () => {
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Opportunités Détectées (BOAMP)</h2>
             <p className="text-slate-500 text-sm">
-              Périmètre : <span className="font-semibold">{MOCK_PROFILE.companyName}</span> 
+              Périmètre : <span className="font-semibold">{userProfile.companyName}</span> 
               <span className="mx-2">•</span> 
               Source : API BOAMP (Connecté)
             </p>
@@ -298,7 +309,7 @@ const Dashboard: React.FC = () => {
             <TenderCard 
               key={tender.id} 
               tender={tender} 
-              userProfile={MOCK_PROFILE}
+              userProfile={userProfile}
               onStatusChange={handleStatusChange} 
             />
           ))}

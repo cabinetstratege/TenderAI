@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUserProfile, saveUserProfile } from '../services/mockData';
+import { userService } from '../services/userService';
 import { suggestCPVCodes } from '../services/geminiService';
 import { Save, Server, Shield, CheckCircle, Map, Globe, Sparkles, Loader2 } from 'lucide-react';
 import { UserProfile } from '../types';
@@ -8,9 +8,16 @@ const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSuggestingCPV, setIsSuggestingCPV] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setProfile(getUserProfile());
+    const loadProfile = async () => {
+        setLoading(true);
+        const p = await userService.getCurrentProfile();
+        setProfile(p);
+        setLoading(false);
+    }
+    loadProfile();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -23,9 +30,9 @@ const Profile: React.FC = () => {
       if(profile) setProfile({...profile, scope});
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (profile) {
-      saveUserProfile(profile);
+      await userService.saveProfile(profile);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     }
@@ -48,7 +55,8 @@ const Profile: React.FC = () => {
   // Simulated visual map selector
   const toggleRegion = (code: string) => {
       if(!profile) return;
-      let depts = profile.targetDepartments.split(',').map(d => d.trim()).filter(d=>d);
+      const currentDepts = profile.targetDepartments || "";
+      let depts = currentDepts.split(',').map(d => d.trim()).filter(d=>d);
       if(depts.includes(code)) {
           depts = depts.filter(d => d !== code);
       } else {
@@ -57,7 +65,7 @@ const Profile: React.FC = () => {
       setProfile({...profile, targetDepartments: depts.join(', ')});
   };
 
-  if (!profile) return <div>Chargement...</div>;
+  if (loading || !profile) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -90,7 +98,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-700">Statut Abonnement</label>
                     <div className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg font-medium inline-block w-full text-center">
-                    {profile.subscriptionStatus}
+                    {profile.subscriptionStatus || 'Trial'}
                     </div>
                 </div>
             </div>
@@ -172,7 +180,7 @@ const Profile: React.FC = () => {
                                 key={code}
                                 onClick={() => toggleRegion(code)}
                                 className={`text-xs font-mono py-1 rounded border ${
-                                    profile.targetDepartments.includes(code)
+                                    (profile.targetDepartments || '').includes(code)
                                     ? 'bg-primary text-white border-primary'
                                     : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
                                 }`}

@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { MOCK_TENDERS, ADMIN_STATS, resetUserProfile } from '../services/mockData';
+import { MOCK_TENDERS, ADMIN_STATS } from '../services/mockData';
+import { userService } from '../services/userService';
 import { Edit, Trash, Users, Activity, FileText, TrendingUp, RefreshCw } from 'lucide-react';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ao' | 'users' | 'analytics'>('ao');
+
+  const handleReset = () => {
+      userService.resetLocalUser();
+      window.location.reload();
+  };
 
   return (
     <div className="space-y-6">
@@ -35,7 +41,7 @@ const Admin: React.FC = () => {
         <div className="space-y-4">
             <div className="flex justify-end gap-2">
                 <button 
-                    onClick={resetUserProfile}
+                    onClick={handleReset}
                     className="flex items-center gap-2 bg-red-100 text-red-700 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200"
                     title="Efface le profil local et relance le Wizard"
                 >
