@@ -4,13 +4,14 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Changed from './' to '/' for proper routing on Vercel
+  base: './', 
   build: {
     outDir: 'dist',
     emptyOutDir: true,
   },
   define: {
-    // This allows the code to access process.env.API_KEY during the build/runtime
-    'process.env': process.env
+    // SAFELY inject only the API_KEY. 
+    // Do NOT overwrite the whole process.env object, as it breaks React.
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
   }
 });
