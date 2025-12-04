@@ -2,7 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface Props {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
 interface State {
@@ -11,7 +11,7 @@ interface State {
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  state: State = {
+  public state: State = {
     hasError: false,
     error: null,
   };

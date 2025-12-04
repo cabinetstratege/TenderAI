@@ -22,9 +22,14 @@ export const userService = {
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle(); // Use maybeSingle to avoid 406 error if row doesn't exist yet
 
-        if (error || !data) {
+        if (error) {
+            console.error("Error fetching profile:", error);
+            return null;
+        }
+
+        if (!data) {
             return null;
         }
 
@@ -38,8 +43,7 @@ export const userService = {
             targetDepartments: data.target_departments || "",
             scope: data.scope || "France",
             subscriptionStatus: data.subscription_status || "Trial",
-            savedDashboardFilters: data.saved_dashboard_filters || undefined,
-            isSuperAdmin: data.is_super_admin || false
+            savedDashboardFilters: data.saved_dashboard_filters || undefined
         } as UserProfile;
     },
 
@@ -62,8 +66,7 @@ export const userService = {
             negativeKeywords: d.negative_keywords || "",
             targetDepartments: d.target_departments || "",
             scope: d.scope || "France",
-            subscriptionStatus: d.subscription_status || "Trial",
-            isSuperAdmin: d.is_super_admin || false
+            subscriptionStatus: d.subscription_status || "Trial"
         }));
     },
 
@@ -87,7 +90,6 @@ export const userService = {
             ...(profile.scope && { scope: profile.scope }),
             ...(profile.subscriptionStatus && { subscription_status: profile.subscriptionStatus }),
             ...(profile.savedDashboardFilters && { saved_dashboard_filters: profile.savedDashboardFilters })
-            // is_super_admin is NEVER updated here for security
         };
 
         const { error } = await supabase

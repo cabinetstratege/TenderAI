@@ -82,7 +82,6 @@ const SuperAdmin: React.FC = () => {
                                         <td className="px-4 py-3">
                                             <div className="font-medium text-slate-900">{user.companyName}</div>
                                             <div className="text-xs text-slate-400 font-mono truncate w-24">{user.id}</div>
-                                            {user.isSuperAdmin && <span className="text-[10px] bg-slate-900 text-white px-1 rounded">ADMIN</span>}
                                         </td>
                                         <td className="px-4 py-3 truncate max-w-xs" title={user.specialization}>
                                             {user.specialization || "N/A"}

@@ -14,6 +14,7 @@ import Welcome from './pages/Welcome';
 import Auth from './pages/Auth';
 import { useAuth } from './context/AuthContext';
 import { Loader2 } from 'lucide-react';
+import RequireSuperAdmin from './components/RequireSuperAdmin';
 
 const AppRoutes = () => {
     const location = useLocation();
@@ -63,8 +64,15 @@ const AppRoutes = () => {
                         <Route path="/pricing" element={<Pricing />} />
                         <Route path="/admin" element={<Admin />} />
                         
-                        {/* Super Admin Route - TEMPORARILY OPEN FOR DEV ACCESS */}
-                        <Route path="/super-admin" element={<SuperAdmin />} />
+                        {/* Protected Super Admin Route */}
+                        <Route 
+                          path="/super-admin" 
+                          element={
+                            <RequireSuperAdmin>
+                              <SuperAdmin />
+                            </RequireSuperAdmin>
+                          } 
+                        />
                         
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

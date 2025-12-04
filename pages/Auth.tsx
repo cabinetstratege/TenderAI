@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
+import { Lock, Mail, Loader2, ArrowRight, CheckCircle } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -10,22 +11,29 @@ const Auth: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
-        // Depending on Supabase settings, email confirmation might be required.
-        // For this demo, we assume auto-confirm or user just logs in.
-        // But usually sign up logs you in automatically if confirm is off.
+        
+        if (data.user && data.session) {
+           // User created and auto-logged in
+        } else if (data.user && !data.session) {
+           setSuccessMsg("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer.");
+           setLoading(false);
+           return;
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -37,8 +45,14 @@ const Auth: React.FC = () => {
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue');
     } finally {
-      setLoading(false);
+      if(!successMsg) setLoading(false);
     }
+  };
+
+  const toggleMode = () => {
+      setIsSignUp(!isSignUp);
+      setError(null);
+      setSuccessMsg(null);
   };
 
   return (
@@ -61,55 +75,64 @@ const Auth: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Email professionnel</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="email" 
-                required
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary outline-none"
-                placeholder="nom@entreprise.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
+        {successMsg && (
+          <div className="bg-green-50 text-green-700 p-4 rounded-lg text-sm text-center border border-green-200 flex flex-col items-center gap-2">
+            <CheckCircle size={24} />
+            {successMsg}
           </div>
+        )}
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Mot de passe</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input 
-                type="password" 
-                required
-                minLength={6}
-                className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary outline-none"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+        {!successMsg && (
+            <form onSubmit={handleAuth} className="space-y-4">
+            <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">Email professionnel</label>
+                <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                    type="email" 
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    placeholder="nom@entreprise.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+                </div>
             </div>
-          </div>
 
-          <button 
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-70 flex items-center justify-center gap-2 transition-all"
-          >
-            {loading ? <Loader2 className="animate-spin" /> : (
-              <>
-                {isSignUp ? "Créer un compte" : "Se connecter"}
-                <ArrowRight size={18} />
-              </>
-            )}
-          </button>
-        </form>
+            <div className="space-y-1">
+                <label className="text-sm font-medium text-slate-700">Mot de passe</label>
+                <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                    type="password" 
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                />
+                </div>
+            </div>
+
+            <button 
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 disabled:opacity-70 flex items-center justify-center gap-2 transition-all"
+            >
+                {loading ? <Loader2 className="animate-spin" /> : (
+                <>
+                    {isSignUp ? "Créer un compte" : "Se connecter"}
+                    <ArrowRight size={18} />
+                </>
+                )}
+            </button>
+            </form>
+        )}
 
         <div className="text-center pt-2 border-t border-slate-100">
           <button 
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={toggleMode}
             className="text-sm text-slate-600 hover:text-primary font-medium"
           >
             {isSignUp ? "Déjà un compte ? Se connecter" : "Pas encore de compte ? S'inscrire"}

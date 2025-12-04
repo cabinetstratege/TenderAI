@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { userService } from '../services/userService';
@@ -7,6 +8,7 @@ interface AuthContextType {
   session: any;
   profile: UserProfile | null;
   loading: boolean;
+  isSuperAdmin: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -15,6 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   profile: null,
   loading: true,
+  isSuperAdmin: false,
   refreshProfile: async () => {},
   signOut: async () => {},
 });
@@ -23,6 +26,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<any>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  const checkRole = (currentSession: any) => {
+      if (currentSession?.user?.app_metadata) {
+          const role = currentSession.user.app_metadata.role;
+          // Check for custom role in Supabase Auth Metadata
+          setIsSuperAdmin(role === 'super_admin' || role === 'super_user');
+      } else {
+          setIsSuperAdmin(false);
+      }
+  };
 
   const fetchProfile = async (currentSession: any) => {
     if (currentSession?.user) {
@@ -39,7 +53,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshProfile = async () => {
-    // Don't set full loading to true to avoid flashing white screen, just fetch
     await fetchProfile(session);
   };
 
@@ -47,23 +60,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
+    setIsSuperAdmin(false);
   };
 
   useEffect(() => {
     // Initial Load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      checkRole(session);
       fetchProfile(session).then(() => setLoading(false));
     });
 
     // Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      checkRole(session);
       if (!session) {
         setProfile(null);
         setLoading(false);
       } else {
-        // If we just logged in, fetch profile
         fetchProfile(session).then(() => setLoading(false));
       }
     });
@@ -72,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, refreshProfile, signOut }}>
+    <AuthContext.Provider value={{ session, profile, loading, isSuperAdmin, refreshProfile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -38,7 +38,7 @@ const NavItem = ({ to, icon: Icon, label, className }: { to: string; icon: any; 
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const { profile } = useAuth();
+  const { isSuperAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -63,16 +63,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <NavItem to="/profile" icon={Building2} label="Profil Entreprise" />
           <NavItem to="/pricing" icon={CreditCard} label="Plans & Tarifs" />
           
-          {/* Super Admin Link - TEMPORARILY OPEN FOR DEV */}
-          <div className="pt-4 mt-4 border-t border-slate-800">
-            <p className="px-4 text-xs font-bold text-slate-500 uppercase mb-2">Backoffice</p>
-            <NavItem 
-                to="/super-admin" 
-                icon={ShieldCheck} 
-                label="Super Admin" 
-                className="text-green-400 hover:text-green-300 hover:bg-slate-800/50"
-            />
-          </div>
+          {/* Super Admin Link */}
+          {isSuperAdmin && (
+            <div className="pt-4 mt-4 border-t border-slate-800">
+                <p className="px-4 text-xs font-bold text-slate-500 uppercase mb-2">Backoffice</p>
+                <NavItem 
+                    to="/super-admin" 
+                    icon={ShieldCheck} 
+                    label="Super Admin" 
+                    className="text-green-400 hover:text-green-300 hover:bg-slate-800/50"
+                />
+            </div>
+          )}
         </nav>
 
         <div className="mt-auto pt-4 border-t border-slate-700 space-y-1">
@@ -105,10 +107,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/stats" icon={BarChart2} label="Statistiques" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/profile" icon={Building2} label="Profil Entreprise" /></div>
             
-            {/* Super Admin Mobile - TEMPORARILY OPEN */}
-            <div onClick={() => setIsMobileMenuOpen(false)}>
-                <NavItem to="/super-admin" icon={ShieldCheck} label="Super Admin" className="text-green-400" />
-            </div>
+            {/* Super Admin Mobile */}
+            {isSuperAdmin && (
+                <div onClick={() => setIsMobileMenuOpen(false)}>
+                    <NavItem to="/super-admin" icon={ShieldCheck} label="Super Admin" className="text-green-400" />
+                </div>
+            )}
 
             <button 
               onClick={handleLogout}
