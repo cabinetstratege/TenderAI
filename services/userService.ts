@@ -1,3 +1,4 @@
+
 import { supabase } from './supabaseClient';
 import { UserProfile } from '../types';
 
@@ -37,8 +38,33 @@ export const userService = {
             targetDepartments: data.target_departments || "",
             scope: data.scope || "France",
             subscriptionStatus: data.subscription_status || "Trial",
-            savedDashboardFilters: data.saved_dashboard_filters || undefined
+            savedDashboardFilters: data.saved_dashboard_filters || undefined,
+            isSuperAdmin: data.is_super_admin || false
         } as UserProfile;
+    },
+
+    // ADMIN ONLY: Get all profiles
+    getAllProfiles: async (): Promise<UserProfile[]> => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*');
+
+        if (error) {
+            console.error("Error fetching all profiles", error);
+            return [];
+        }
+
+        return data.map((d: any) => ({
+            id: d.id,
+            companyName: d.company_name || "N/A",
+            specialization: d.specialization || "",
+            cpvCodes: d.cpv_codes || "",
+            negativeKeywords: d.negative_keywords || "",
+            targetDepartments: d.target_departments || "",
+            scope: d.scope || "France",
+            subscriptionStatus: d.subscription_status || "Trial",
+            isSuperAdmin: d.is_super_admin || false
+        }));
     },
 
     saveProfile: async (profile: Partial<UserProfile>): Promise<void> => {
@@ -61,6 +87,7 @@ export const userService = {
             ...(profile.scope && { scope: profile.scope }),
             ...(profile.subscriptionStatus && { subscription_status: profile.subscriptionStatus }),
             ...(profile.savedDashboardFilters && { saved_dashboard_filters: profile.savedDashboardFilters })
+            // is_super_admin is NEVER updated here for security
         };
 
         const { error } = await supabase

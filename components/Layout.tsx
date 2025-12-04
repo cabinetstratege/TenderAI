@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { userService } from '../services/userService';
+import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -10,14 +12,15 @@ import {
   ShieldAlert,
   Menu,
   X,
-  LogOut
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: string }) => (
+const NavItem = ({ to, icon: Icon, label, className }: { to: string; icon: any; label: string; className?: string }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
@@ -25,7 +28,7 @@ const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: stri
         isActive 
           ? 'bg-primary text-white shadow-md' 
           : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-      }`
+      } ${className || ''}`
     }
   >
     <Icon size={20} />
@@ -35,11 +38,11 @@ const NavItem = ({ to, icon: Icon, label }: { to: string; icon: any; label: stri
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const { profile } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await userService.resetLocalUser();
-    // navigate('/auth'); // Handled by App.tsx state change
   };
 
   return (
@@ -59,10 +62,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <NavItem to="/stats" icon={BarChart2} label="Statistiques" />
           <NavItem to="/profile" icon={Building2} label="Profil Entreprise" />
           <NavItem to="/pricing" icon={CreditCard} label="Plans & Tarifs" />
+          
+          {/* Super Admin Link - TEMPORARILY OPEN FOR DEV */}
+          <div className="pt-4 mt-4 border-t border-slate-800">
+            <p className="px-4 text-xs font-bold text-slate-500 uppercase mb-2">Backoffice</p>
+            <NavItem 
+                to="/super-admin" 
+                icon={ShieldCheck} 
+                label="Super Admin" 
+                className="text-green-400 hover:text-green-300 hover:bg-slate-800/50"
+            />
+          </div>
         </nav>
 
         <div className="mt-auto pt-4 border-t border-slate-700 space-y-1">
-           <NavItem to="/admin" icon={ShieldAlert} label="Administration" />
+           {/* Standard User Admin (Settings) */}
+           <NavItem to="/admin" icon={ShieldAlert} label="Paramètres" />
            <button 
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200"
@@ -89,7 +104,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/my-tenders" icon={Briefcase} label="Mes Appels d'Offres" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/stats" icon={BarChart2} label="Statistiques" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/profile" icon={Building2} label="Profil Entreprise" /></div>
-            <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/pricing" icon={CreditCard} label="Plans & Tarifs" /></div>
+            
+            {/* Super Admin Mobile - TEMPORARILY OPEN */}
+            <div onClick={() => setIsMobileMenuOpen(false)}>
+                <NavItem to="/super-admin" icon={ShieldCheck} label="Super Admin" className="text-green-400" />
+            </div>
+
             <button 
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200 mt-4 border-t border-slate-700"

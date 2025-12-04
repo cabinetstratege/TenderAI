@@ -1,3 +1,4 @@
+
 export enum TenderStatus {
   TODO = 'A traiter',
   SAVED = 'Sauvegardé',
@@ -30,6 +31,8 @@ export interface UserProfile {
   subscriptionStatus: 'Active' | 'Suspended';
   // Saved View State (Frontend Layer)
   savedDashboardFilters?: DashboardFilters;
+  // Security
+  isSuperAdmin?: boolean;
 }
 
 export interface AIStrategyAnalysis {

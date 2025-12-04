@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -8,6 +9,7 @@ import Stats from './pages/Stats';
 import Profile from './pages/Profile';
 import Pricing from './pages/Pricing';
 import Admin from './pages/Admin';
+import SuperAdmin from './pages/SuperAdmin';
 import Welcome from './pages/Welcome';
 import Auth from './pages/Auth';
 import { useAuth } from './context/AuthContext';
@@ -60,6 +62,10 @@ const AppRoutes = () => {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/pricing" element={<Pricing />} />
                         <Route path="/admin" element={<Admin />} />
+                        
+                        {/* Super Admin Route - TEMPORARILY OPEN FOR DEV ACCESS */}
+                        <Route path="/super-admin" element={<SuperAdmin />} />
+                        
                         <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Layout>
