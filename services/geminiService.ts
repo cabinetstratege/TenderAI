@@ -3,6 +3,29 @@ import { Tender, UserProfile, AIStrategyAnalysis } from "../types";
 
 const MODEL_NAME = "gemini-2.5-flash";
 
+// --- SYSTEM HEALTH CHECK ---
+export const checkApiHealth = async (): Promise<boolean> => {
+  try {
+    // 1. Check if key exists in env
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey || apiKey.includes("AIza") === false) { // Basic format check
+       return false;
+    }
+
+    // 2. Perform a minimal real request to check validity
+    const ai = new GoogleGenAI({ apiKey });
+    await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "Ping",
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Gemini Health Check Failed:", error);
+    return false;
+  }
+};
+
 export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfile): Promise<string> => {
   try {
     if (!process.env.API_KEY) {

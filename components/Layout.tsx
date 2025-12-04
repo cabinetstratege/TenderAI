@@ -9,11 +9,11 @@ import {
   BarChart2, 
   Building2, 
   CreditCard, 
-  ShieldAlert,
   Menu,
   X,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  User
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -38,12 +38,15 @@ const NavItem = ({ to, icon: Icon, label, className }: { to: string; icon: any; 
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, session } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await userService.resetLocalUser();
   };
+
+  const userEmail = session?.user?.email || 'Utilisateur';
+  const userInitial = userEmail.charAt(0).toUpperCase();
 
   return (
     <div className="flex h-screen bg-background">
@@ -77,15 +80,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
         </nav>
 
-        <div className="mt-auto pt-4 border-t border-slate-700 space-y-1">
-           {/* Standard User Admin (Settings) */}
-           <NavItem to="/admin" icon={ShieldAlert} label="Paramètres" />
+        <div className="mt-auto pt-4 border-t border-slate-700 space-y-2">
+           {/* User Profile / Settings Button */}
+           <NavLink 
+             to="/settings"
+             className={({ isActive }) => 
+                `flex items-center gap-3 p-2 rounded-lg transition-colors group ${
+                    isActive ? 'bg-slate-800 ring-1 ring-slate-700' : 'hover:bg-slate-800'
+                }`
+             }
+           >
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center text-white font-bold border border-slate-500 shadow-sm shrink-0">
+                  {userInitial}
+              </div>
+              <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate leading-none mb-1">
+                      {userEmail}
+                  </p>
+                  <p className="text-xs text-slate-400 font-medium group-hover:text-blue-300 transition-colors">
+                      Paramètres du compte
+                  </p>
+              </div>
+           </NavLink>
+
            <button 
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200"
+              className="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all text-slate-400 hover:bg-red-900/50 hover:text-red-200"
            >
-              <LogOut size={20} />
-              <span className="font-medium">Déconnexion</span>
+              <LogOut size={18} />
+              <span className="font-medium text-sm">Déconnexion</span>
            </button>
         </div>
       </aside>
@@ -106,6 +129,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/my-tenders" icon={Briefcase} label="Mes Appels d'Offres" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/stats" icon={BarChart2} label="Statistiques" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/profile" icon={Building2} label="Profil Entreprise" /></div>
+            <div onClick={() => setIsMobileMenuOpen(false)}>
+                 <NavItem to="/settings" icon={User} label="Paramètres du compte" />
+            </div>
             
             {/* Super Admin Mobile */}
             {isSuperAdmin && (

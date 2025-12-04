@@ -1,21 +1,31 @@
 
 import React, { useEffect, useState } from 'react';
 import { userService } from '../services/userService';
+import { checkApiHealth } from '../services/geminiService';
 import { UserProfile } from '../types';
-import { ShieldCheck, Users, Search, Activity, Database, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Users, Search, Activity, Database, AlertTriangle, Loader2 } from 'lucide-react';
 
 const SuperAdmin: React.FC = () => {
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // System Status State
+    const [geminiStatus, setGeminiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
     useEffect(() => {
-        const loadUsers = async () => {
+        const loadData = async () => {
+            // 1. Load Users
             const allUsers = await userService.getAllProfiles();
             setUsers(allUsers);
+            
+            // 2. Check Gemini Health
+            const isGeminiOk = await checkApiHealth();
+            setGeminiStatus(isGeminiOk ? 'online' : 'offline');
+
             setLoading(false);
         };
-        loadUsers();
+        loadData();
     }, []);
 
     const filteredUsers = users.filter(u => 
@@ -118,12 +128,27 @@ const SuperAdmin: React.FC = () => {
                                     <div className="w-2 h-2 rounded-full bg-green-500"></div> Connecté
                                 </span>
                             </div>
+                            
+                            {/* Gemini Status Check */}
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-slate-600">API Gemini</span>
-                                <span className="text-green-600 font-medium flex items-center gap-1">
-                                    <div className="w-2 h-2 rounded-full bg-green-500"></div> Opérationnel
-                                </span>
+                                {geminiStatus === 'checking' && (
+                                    <span className="text-yellow-600 font-medium flex items-center gap-1">
+                                        <Loader2 size={12} className="animate-spin" /> Vérification...
+                                    </span>
+                                )}
+                                {geminiStatus === 'online' && (
+                                    <span className="text-green-600 font-medium flex items-center gap-1">
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div> Opérationnel
+                                    </span>
+                                )}
+                                {geminiStatus === 'offline' && (
+                                    <span className="text-red-600 font-medium flex items-center gap-1">
+                                        <div className="w-2 h-2 rounded-full bg-red-500"></div> Erreur / Clé Manquante
+                                    </span>
+                                )}
                             </div>
+
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-slate-600">Version App</span>
                                 <span className="text-slate-900 font-mono">v1.2.0</span>

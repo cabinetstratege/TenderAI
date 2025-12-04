@@ -8,7 +8,7 @@ import TenderDetail from './pages/TenderDetail';
 import Stats from './pages/Stats';
 import Profile from './pages/Profile';
 import Pricing from './pages/Pricing';
-import Admin from './pages/Admin';
+import Settings from './pages/Settings';
 import SuperAdmin from './pages/SuperAdmin';
 import Welcome from './pages/Welcome';
 import Auth from './pages/Auth';
@@ -62,7 +62,7 @@ const AppRoutes = () => {
                         <Route path="/stats" element={<Stats />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/pricing" element={<Pricing />} />
-                        <Route path="/admin" element={<Admin />} />
+                        <Route path="/settings" element={<Settings />} />
                         
                         {/* Protected Super Admin Route */}
                         <Route 

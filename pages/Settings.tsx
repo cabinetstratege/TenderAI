@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { MOCK_TENDERS, ADMIN_STATS } from '../services/mockData';
 import { userService } from '../services/userService';
-import { Edit, Trash, Users, Activity, FileText, TrendingUp, RefreshCw, LogOut } from 'lucide-react';
+import { Edit, Trash, Users, Activity, FileText, TrendingUp, LogOut } from 'lucide-react';
 
-const Admin: React.FC = () => {
+const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ao' | 'users' | 'analytics'>('ao');
 
   const handleLogout = async () => {
@@ -14,7 +15,7 @@ const Admin: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-900">Administration SaaS</h2>
+        <h2 className="text-2xl font-bold text-slate-900">Paramètres du compte</h2>
         
         <div className="flex items-center gap-4">
             <div className="flex bg-slate-100 rounded-lg p-1">
@@ -125,4 +126,4 @@ const StatCard: React.FC<{label: string, value: string, icon: any, color: string
     )
 }
 
-export default Admin;
+export default Settings;
