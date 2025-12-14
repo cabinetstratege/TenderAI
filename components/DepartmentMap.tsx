@@ -27,28 +27,45 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   }, []);
 
   // 2. Handle Zoom Logic
-  useEffect(() => {
-    if (!mapRef.current || !geoJsonData) return;
+useEffect(() => {
+  if (!mapRef.current || !geoJsonData) return;
 
-    if (codes.length === 1) {
-      // Find the feature for the single selected department
-      const feature = geoJsonData.features.find((f: any) => f.properties.code === codes[0]);
-      
-      if (feature) {
-        const bounds = calculateBounds(feature.geometry);
-        if (bounds) {
-          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 5.2, offset: [-160, -10], duration: 1500 });
-        }
+  // Aucun département sélectionné → rester centrée sur la France
+  if (codes.length === 0) {
+    mapRef.current.flyTo({
+      center: [2.2137, 46.2276],
+      zoom: 4.2,
+      duration: 0
+    });
+    return;
+  }
+
+  // Un seul département sélectionné → zoom ciblé
+  if (codes.length === 1) {
+    const feature = geoJsonData.features.find(
+      (f: any) => f.properties.code === codes[0]
+    );
+    if (feature) {
+      const bounds = calculateBounds(feature.geometry);
+      if (bounds) {
+        mapRef.current.fitBounds(bounds, {
+          padding: 40,
+          maxZoom: 6,
+          duration: 1500
+        });
       }
-    } else {
-      // Reset to France view if multiple or none
-      mapRef.current.flyTo({
-        center: [2.2137, 46.2276],
-        zoom: 2.2,
-        duration: 1500
-      });
     }
-  }, [departments, geoJsonData]); // Re-run when departments change or data loads
+    return;
+  }
+
+  // Plusieurs départements → vue France
+  mapRef.current.flyTo({
+    center: [2.2137, 46.2276],
+    zoom: 4.2,
+    duration: 1500
+  });
+}, [departments, geoJsonData]);
+
 
   // --- Layers ---
 
@@ -99,10 +116,10 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       <Map
         ref={mapRef}
         initialViewState={{
-          longitude: 2.2137,
-          latitude: 46.2276,
-          zoom: 2.2
-        }}
+  longitude: 2.2137,   // centre géographique de la France
+  latitude: 46.2276,
+  zoom: 4.2            // zoom idéal pour voir tout le pays
+}}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLE}
         mapboxAccessToken={MAPBOX_TOKEN}
