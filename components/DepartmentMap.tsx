@@ -113,7 +113,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         {isMapLoaded && (
             <Source id="france-depts" type="geojson" data={GEOJSON_SOURCE}>
             <Layer {...baseOutlineLayer} />
-            <Layer {...highlightLayer} />
+            <Layer {...highlightLayer} beforeId="waterway-label" />
             <Layer {...highlightOutlineLayer} />
             </Source>
         )}
