@@ -138,7 +138,26 @@ const calculateBounds = (geometry: any): [[number, number], [number, number]] | 
   if (geometry.type === 'Polygon') {
       coords = geometry.coordinates.flat();
   } else if (geometry.type === 'MultiPolygon') {
-      coords = geometry.coordinates.flat(2);
+      // Find the polygon with the most points (Main landmass)
+      // This avoids zooming out too much or centering on water for coastal departments
+      let maxPoints = -1;
+      let mainPolyCoords: any[] = [];
+
+      geometry.coordinates.forEach((poly: any[]) => {
+          // poly is an array of rings. poly[0] is the outer ring.
+          // We use the number of points in the outer ring as a proxy for size/importance
+          if (poly[0].length > maxPoints) {
+              maxPoints = poly[0].length;
+              mainPolyCoords = poly;
+          }
+      });
+      
+      if (mainPolyCoords.length > 0) {
+          coords = mainPolyCoords.flat();
+      } else {
+          // Fallback if empty
+          coords = geometry.coordinates.flat(2);
+      }
   } else {
       return null;
   }
