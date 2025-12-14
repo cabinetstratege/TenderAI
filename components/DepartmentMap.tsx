@@ -50,7 +50,7 @@ useEffect(() => {
       if (bounds) {
         mapRef.current.fitBounds(bounds, {
           padding: 40,
-          maxZoom: 6,
+          maxZoom: 4,
           duration: 1500
         });
       }
@@ -75,7 +75,7 @@ useEffect(() => {
     type: 'fill',
     paint: {
       'fill-color': '#29b5ff', // Sky-400 (Light Blue)
-      'fill-opacity': 1,
+      'fill-opacity': 0.7,
     },
     filter: ['in', ['get', 'code'], ['literal', codes]]
   };
