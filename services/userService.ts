@@ -22,7 +22,7 @@ export const userService = {
             .from('profiles')
             .select('*')
             .eq('id', userId)
-            .maybeSingle(); // Use maybeSingle to avoid 406 error if row doesn't exist yet
+            .maybeSingle();
 
         if (error) {
             console.error("Error fetching profile:", error);
@@ -37,11 +37,20 @@ export const userService = {
         return {
             id: data.id,
             companyName: data.company_name || "",
+            siret: data.siret || "",
+            address: data.address || "",
+            website: data.website || "",
+            companySize: data.company_size || "PME",
+            
             specialization: data.specialization || "",
             cpvCodes: data.cpv_codes || "",
+            targetSectors: data.target_sectors || "",
+            certifications: data.certifications || "",
             negativeKeywords: data.negative_keywords || "",
+            
             targetDepartments: data.target_departments || "",
-            scope: data.scope || "France",
+            scope: "France", // Hardcoded per user request
+            
             subscriptionStatus: data.subscription_status || "Trial",
             savedDashboardFilters: data.saved_dashboard_filters || undefined
         } as UserProfile;
@@ -65,7 +74,7 @@ export const userService = {
             cpvCodes: d.cpv_codes || "",
             negativeKeywords: d.negative_keywords || "",
             targetDepartments: d.target_departments || "",
-            scope: d.scope || "France",
+            scope: "France",
             subscriptionStatus: d.subscription_status || "Trial"
         }));
     },
@@ -82,14 +91,22 @@ export const userService = {
         // Map camelCase to snake_case for DB
         const dbPayload: any = {
             id: userId,
-            ...(profile.companyName && { company_name: profile.companyName }),
-            ...(profile.specialization && { specialization: profile.specialization }),
-            ...(profile.cpvCodes && { cpv_codes: profile.cpvCodes }),
-            ...(profile.negativeKeywords && { negative_keywords: profile.negativeKeywords }),
-            ...(profile.targetDepartments && { target_departments: profile.targetDepartments }),
-            ...(profile.scope && { scope: profile.scope }),
-            ...(profile.subscriptionStatus && { subscription_status: profile.subscriptionStatus }),
-            ...(profile.savedDashboardFilters && { saved_dashboard_filters: profile.savedDashboardFilters })
+            ...(profile.companyName !== undefined && { company_name: profile.companyName }),
+            ...(profile.siret !== undefined && { siret: profile.siret }),
+            ...(profile.address !== undefined && { address: profile.address }),
+            ...(profile.website !== undefined && { website: profile.website }),
+            ...(profile.companySize !== undefined && { company_size: profile.companySize }),
+            
+            ...(profile.specialization !== undefined && { specialization: profile.specialization }),
+            ...(profile.cpvCodes !== undefined && { cpv_codes: profile.cpvCodes }),
+            ...(profile.targetSectors !== undefined && { target_sectors: profile.targetSectors }),
+            ...(profile.certifications !== undefined && { certifications: profile.certifications }),
+            ...(profile.negativeKeywords !== undefined && { negative_keywords: profile.negativeKeywords }),
+            
+            ...(profile.targetDepartments !== undefined && { target_departments: profile.targetDepartments }),
+            
+            ...(profile.subscriptionStatus !== undefined && { subscription_status: profile.subscriptionStatus }),
+            ...(profile.savedDashboardFilters !== undefined && { saved_dashboard_filters: profile.savedDashboardFilters })
         };
 
         const { error } = await supabase
@@ -103,7 +120,6 @@ export const userService = {
     },
 
     resetLocalUser: async () => {
-        // Sign out from Supabase
         await supabase.auth.signOut();
     }
 };

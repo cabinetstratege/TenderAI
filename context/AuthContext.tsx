@@ -31,8 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkRole = (currentSession: any) => {
       if (currentSession?.user?.app_metadata) {
           const role = currentSession.user.app_metadata.role;
-          // Check for custom role in Supabase Auth Metadata
-          setIsSuperAdmin(role === 'superuser');
+          // Check for various role names to be robust
+          const superRoles = ['superuser', 'super_user', 'super_admin'];
+          setIsSuperAdmin(superRoles.includes(role));
       } else {
           setIsSuperAdmin(false);
       }

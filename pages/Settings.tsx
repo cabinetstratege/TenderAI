@@ -1,129 +1,78 @@
 
-import React, { useState } from 'react';
-import { MOCK_TENDERS, ADMIN_STATS } from '../services/mockData';
+import React from 'react';
 import { userService } from '../services/userService';
-import { Edit, Trash, Users, Activity, FileText, TrendingUp, LogOut } from 'lucide-react';
+import { tenderService } from '../services/tenderService';
+import { LogOut, Download, Database, Shield, FileJson } from 'lucide-react';
 
 const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ao' | 'users' | 'analytics'>('ao');
-
+  
   const handleLogout = async () => {
-      await userService.resetLocalUser(); // Signs out supabase
-      // Router will detect auth change and redirect to /auth
+      await userService.resetLocalUser(); 
+  };
+
+  const handleExportData = async () => {
+      await tenderService.exportUserData();
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-900">Paramètres du compte</h2>
-        
-        <div className="flex items-center gap-4">
-            <div className="flex bg-slate-100 rounded-lg p-1">
-                 <button 
-                    onClick={() => setActiveTab('ao')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'ao' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                 >
-                     Gestion AO
-                 </button>
-                 <button 
-                    onClick={() => setActiveTab('users')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                 >
-                     Utilisateurs
-                 </button>
-                 <button 
-                    onClick={() => setActiveTab('analytics')}
-                    className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === 'analytics' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
-                 >
-                     Analytics Globaux
-                 </button>
-            </div>
-
-            <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 shadow-sm transition-colors"
-            >
-                <LogOut size={16}/> Déconnexion
-            </button>
+    <div className="space-y-8 max-w-4xl">
+      <div className="flex justify-between items-center border-b border-border pb-6">
+        <div>
+            <h2 className="text-2xl font-bold text-white">Paramètres du compte</h2>
+            <p className="text-slate-400 text-sm mt-1">Gérez vos données personnelles et votre connexion.</p>
         </div>
       </div>
 
-      {activeTab === 'ao' && (
-        <div className="space-y-4">
-            <div className="flex justify-end gap-2">
-                <button className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800">
-                + Injecter AO Brut
-                </button>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-100 border-b border-slate-200">
-                    <tr>
-                    <th className="px-4 py-3 font-semibold text-slate-900">ID</th>
-                    <th className="px-4 py-3 font-semibold text-slate-900">Titre</th>
-                    <th className="px-4 py-3 font-semibold text-slate-900">Acheteur</th>
-                    <th className="px-4 py-3 font-semibold text-slate-900">Score IA</th>
-                    <th className="px-4 py-3 font-semibold text-slate-900 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                    {MOCK_TENDERS.map(tender => (
-                    <tr key={tender.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-mono text-xs">{tender.id}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900 truncate max-w-xs">{tender.title}</td>
-                        <td className="px-4 py-3">{tender.buyer}</td>
-                        <td className="px-4 py-3">{tender.compatibilityScore}</td>
-                        <td className="px-4 py-3 text-right space-x-2">
-                        <button className="text-slate-400 hover:text-blue-600"><Edit size={16} /></button>
-                        <button className="text-slate-400 hover:text-red-600"><Trash size={16} /></button>
-                        </td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            </div>
-        </div>
-      )}
-
-      {activeTab === 'analytics' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard label="Appels d'Offres Total" value={ADMIN_STATS.totalTenders.toLocaleString()} icon={FileText} color="blue" />
-              <StatCard label="Utilisateurs Actifs" value={ADMIN_STATS.activeUsers.toString()} icon={Users} color="green" />
-              <StatCard label="Analyses IA (Mois)" value={ADMIN_STATS.aiAnalysesPerformed.toLocaleString()} icon={Activity} color="purple" />
-              <StatCard label="Taux Conversion" value={`${ADMIN_STATS.conversionRate}%`} icon={TrendingUp} color="orange" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <div className="bg-surface p-6 rounded-xl border border-border shadow-lg space-y-4">
+              <div className="w-10 h-10 bg-blue-900/30 text-blue-400 rounded-lg flex items-center justify-center">
+                  <Database size={20} />
+              </div>
+              <div>
+                  <h3 className="font-bold text-white">Données Personnelles</h3>
+                  <p className="text-sm text-slate-400 mt-1">
+                      Téléchargez une copie complète de vos données (Profil, Historique d'AO, Chats IA) au format JSON.
+                  </p>
+              </div>
+              <button 
+                onClick={handleExportData}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-slate-700 rounded-lg text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+              >
+                  <Download size={16} /> Exporter mes données
+              </button>
           </div>
-      )}
-      
-      {activeTab === 'users' && (
-          <div className="bg-white p-12 rounded-xl text-center border border-dashed border-slate-300">
-              <Users className="mx-auto text-slate-300 mb-4" size={48} />
-              <p className="text-slate-500">Module de gestion des utilisateurs en cours de développement.</p>
-          </div>
-      )}
 
+          <div className="bg-surface p-6 rounded-xl border border-border shadow-lg space-y-4">
+              <div className="w-10 h-10 bg-red-900/30 text-red-500 rounded-lg flex items-center justify-center">
+                  <Shield size={20} />
+              </div>
+              <div>
+                  <h3 className="font-bold text-white">Sécurité</h3>
+                  <p className="text-sm text-slate-400 mt-1">
+                      Déconnectez-vous de votre session actuelle en toute sécurité.
+                  </p>
+              </div>
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-red-950/30 border border-red-900/50 rounded-lg text-red-400 font-medium hover:bg-red-900/50 transition-colors"
+              >
+                  <LogOut size={16} /> Déconnexion
+              </button>
+          </div>
+      </div>
+
+      <div className="bg-slate-800/30 p-6 rounded-xl border border-border flex items-start gap-4">
+          <FileJson className="text-slate-500 mt-1" size={24} />
+          <div>
+              <h4 className="font-bold text-slate-200 text-sm">Conformité RGPD</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Le Compagnon des Marchés s'engage à protéger vos données. Vos informations de profil et vos interactions ne sont utilisées que pour personnaliser votre expérience.
+              </p>
+          </div>
+      </div>
     </div>
   );
 };
-
-const StatCard: React.FC<{label: string, value: string, icon: any, color: string}> = ({label, value, icon: Icon, color}) => {
-    const colors: any = {
-        blue: 'bg-blue-50 text-blue-600',
-        green: 'bg-green-50 text-green-600',
-        purple: 'bg-purple-50 text-purple-600',
-        orange: 'bg-orange-50 text-orange-600'
-    };
-
-    return (
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${colors[color]}`}>
-                <Icon size={24} />
-            </div>
-            <div>
-                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">{label}</p>
-                <p className="text-2xl font-bold text-slate-900">{value}</p>
-            </div>
-        </div>
-    )
-}
 
 export default Settings;

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Tender, UserProfile, AIStrategyAnalysis } from "../types";
 
@@ -28,11 +29,12 @@ export const checkApiHealth = async (): Promise<boolean> => {
 
 export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfile): Promise<string> => {
   try {
-    if (!process.env.API_KEY) {
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey) {
       return "Clé API manquante. Impossible d'analyser.";
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
       Tu es un expert en réponse aux appels d'offres publics (Source: BOAMP).
@@ -71,11 +73,12 @@ export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfi
 
 export const suggestCPVCodes = async (specialization: string): Promise<string[]> => {
   try {
-    if (!process.env.API_KEY) {
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey) {
       return ["45000000 (Exemple - Clé API manquante)"];
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     
     const prompt = `
       Tu es un expert en marchés publics.
@@ -91,7 +94,6 @@ export const suggestCPVCodes = async (specialization: string): Promise<string[]>
     });
 
     const text = response.text || "[]";
-    // Basic cleaning to try and parse JSON array if markdown code blocks are used
     const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     try {
@@ -109,14 +111,15 @@ export const suggestCPVCodes = async (specialization: string): Promise<string[]>
 
 export const generateProfileSuggestions = async (specialization: string): Promise<{ cpvCodes: string, negativeKeywords: string }> => {
   try {
-    if (!process.env.API_KEY) {
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey) {
       return { 
           cpvCodes: "45000000, 72000000", 
           negativeKeywords: "hors sujet, maintenance basique" 
       };
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
       Tu es un consultant en stratégie de marchés publics.
@@ -150,9 +153,10 @@ export const generateProfileSuggestions = async (specialization: string): Promis
 
 export const generateStrategicAnalysis = async (tender: Tender, profile: UserProfile): Promise<AIStrategyAnalysis | null> => {
   try {
-    if (!process.env.API_KEY) return null;
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey) return null;
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
       Tu es un directeur commercial expert en B2B.
@@ -189,30 +193,58 @@ export const generateStrategicAnalysis = async (tender: Tender, profile: UserPro
   }
 };
 
-export const chatWithTender = async (tender: Tender, history: {role: string, parts: {text: string}[]}[], message: string): Promise<string> => {
+export const chatWithTender = async (tender: Tender, history: {role: string, parts: {text: string}[]}[], message: string, profile?: UserProfile): Promise<string> => {
    try {
-    if (!process.env.API_KEY) return "Erreur: Clé API manquante.";
+    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    if (!apiKey) return "Erreur: Clé API manquante ou mal configurée.";
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     
-    const systemInstruction = `Tu es TenderAI, un assistant spécialisé pour aider à répondre à cet Appel d'Offre précis : "${tender.title}".
-    Utilise le contexte suivant :
-    Description: ${tender.fullDescription}
-    Acheteur: ${tender.buyer}
+    const companyContext = profile 
+        ? `Ton entreprise (le candidat) est "${profile.companyName}".
+           Activité: ${profile.specialization}.
+           Points forts/Certifications: ${profile.certifications || 'Non spécifié'}.
+           Adresse: ${profile.address || 'Non spécifié'}.`
+        : "Tu réponds au nom d'une entreprise candidate générique.";
+
+    const systemInstruction = `
+    Tu es TenderAI, un "Bid Manager" Senior.
     
-    Tes réponses doivent être courtes, professionnelles et orientées vers la rédaction du mémoire technique ou la compréhension du besoin.`;
+    TA MISSION : 
+    Rédiger des documents de haute qualité (Lettres, Mémoires, Mails).
+
+    CONTEXTE DE L'AO :
+    Titre : ${tender.title}
+    Acheteur : ${tender.buyer}
+    Détails : ${tender.fullDescription?.substring(0, 5000)}...
+
+    CANDIDAT (NOUS) :
+    ${companyContext}
+
+    RÈGLES :
+    1. **Formatage** : Utilise Markdown. Titres en gras (**Titre**), listes à puces.
+    2. **Ton** : Professionnel, persuasif, mais sobre.
+    3. **Personnalisation** : Remplis les champs avec les infos du profil.
+    4. **Signature** : Signe toujours "L'équipe de ${profile?.companyName || 'Candidat'}".
+    `;
 
     const chat = ai.chats.create({
       model: MODEL_NAME,
-      config: { systemInstruction },
+      config: { 
+          systemInstruction,
+          temperature: 0.7,
+      },
       history: history
     });
 
     const result = await chat.sendMessage({ message });
-    return result.text || "Je n'ai pas compris.";
+    return result.text || "Je n'ai pas pu générer de réponse.";
 
-   } catch (error) {
+   } catch (error: any) {
      console.error("Chat Error", error);
-     return "Désolé, je ne peux pas répondre pour le moment.";
+     if (error.message?.includes('429')) {
+         return "⚠️ Trop de demandes. Veuillez patienter quelques secondes.";
+     }
+     return "⚠️ Une erreur technique est survenue.";
    }
 };

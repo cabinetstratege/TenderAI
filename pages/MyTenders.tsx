@@ -1,20 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
 import { tenderService } from '../services/tenderService';
 import { TenderStatus, Tender, UserInteraction } from '../types';
-import { Calendar, Download, Trash2, CheckCircle, XCircle, FileText, X, Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, FileText, X, AlertCircle, CheckCircle, BrainCircuit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const MyTenders: React.FC = () => {
   const [data, setData] = useState<{tender: Tender, interaction: UserInteraction}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [currentNote, setCurrentNote] = useState('');
 
   const refreshData = async () => {
       setIsLoading(true);
       const savedData = await tenderService.getSavedTenders();
-      setData(savedData);
+      // On re-mappe les vieux statuts 'SAVED' vers 'TODO' si besoin pour la compatibilité
+      const normalizedData = savedData.map(item => {
+          if (item.interaction.status === 'Sauvegardé' as any) {
+              return {...item, interaction: {...item.interaction, status: TenderStatus.TODO}};
+          }
+          return item;
+      });
+      setData(normalizedData);
       setIsLoading(false);
   };
 
@@ -24,14 +31,12 @@ const MyTenders: React.FC = () => {
 
   const handleUpdateStatus = (id: string, status: TenderStatus) => {
     tenderService.updateInteraction(id, status);
-    // Optimistic UI update
     setData(prev => prev.map(item => {
         if(item.tender.id === id) {
             return {...item, interaction: {...item.interaction, status}};
         }
         return item;
     }));
-    // Note: In a real app we might refetch or filter out depending on if we show WON/LOST here
   };
 
   const openNoteModal = (tenderId: string, note: string = '') => {
@@ -41,7 +46,11 @@ const MyTenders: React.FC = () => {
 
   const saveNote = () => {
     if (editingNoteId) {
-        tenderService.updateInteraction(editingNoteId, TenderStatus.SAVED, currentNote);
+        // Find current status to preserve it
+        const currentItem = data.find(i => i.tender.id === editingNoteId);
+        const status = currentItem ? currentItem.interaction.status : TenderStatus.TODO;
+        
+        tenderService.updateInteraction(editingNoteId, status, currentNote);
         setData(prev => prev.map(item => {
              if(item.tender.id === editingNoteId) {
                  return {...item, interaction: {...item.interaction, internalNotes: currentNote}};
@@ -52,166 +61,177 @@ const MyTenders: React.FC = () => {
     }
   };
 
-  const handleExportICS = (tender: any) => {
-    const event = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'BEGIN:VEVENT',
-      `SUMMARY:Rendu AO: ${tender.title}`,
-      `DTSTART:${tender.deadline.replace(/-/g, '')}`,
-      `DESCRIPTION:Acheteur: ${tender.buyer}\\nLien: ${tender.linkDCE}`,
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\n');
+  const getColumnData = (status: TenderStatus) => {
+      return data.filter(item => item.interaction.status === status);
+  };
 
-    const blob = new Blob([event], { type: 'text/calendar;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `AO_${tender.id}.ics`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const KanbanCard = ({ item }: { item: {tender: Tender, interaction: UserInteraction} }) => {
+      const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      
+      return (
+          <div className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-600 transition-all flex flex-col gap-3 group relative">
+              <div className="flex justify-between items-start">
+                  <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded">{item.tender.idWeb}</span>
+                  {daysRemaining < 5 ? (
+                      <span className="text-[10px] font-bold text-red-400 flex items-center gap-1 bg-red-950/30 px-2 py-0.5 rounded-full border border-red-900/50">
+                          <AlertCircle size={10}/> J-{daysRemaining}
+                      </span>
+                  ) : (
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-900/50">
+                          J-{daysRemaining}
+                      </span>
+                  )}
+              </div>
+              
+              <Link to={`/tender/${item.tender.id}`} className="font-semibold text-sm text-slate-200 line-clamp-2 hover:text-primary transition-colors">
+                  {item.tender.title}
+              </Link>
+              <p className="text-xs text-slate-500 truncate">{item.tender.buyer}</p>
+
+              {/* Notes Indicator */}
+              {item.interaction.internalNotes && (
+                  <div className="bg-amber-950/20 border border-amber-900/30 p-2 rounded text-[10px] text-amber-200/80 truncate cursor-pointer hover:bg-amber-950/40" onClick={() => openNoteModal(item.tender.id, item.interaction.internalNotes)}>
+                      📝 {item.interaction.internalNotes}
+                  </div>
+              )}
+
+              {/* Actions Footer */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800 mt-auto">
+                  <button onClick={() => openNoteModal(item.tender.id, item.interaction.internalNotes)} className="text-slate-500 hover:text-white" title="Notes">
+                      <FileText size={14} />
+                  </button>
+                  
+                  <div className="flex gap-1">
+                      {item.interaction.status !== TenderStatus.TODO && (
+                          <button 
+                            onClick={() => {
+                                const prev = item.interaction.status === TenderStatus.IN_PROGRESS ? TenderStatus.TODO 
+                                           : item.interaction.status === TenderStatus.SUBMITTED ? TenderStatus.IN_PROGRESS 
+                                           : TenderStatus.SUBMITTED;
+                                handleUpdateStatus(item.tender.id, prev);
+                            }}
+                            className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
+                          >
+                              <ArrowLeft size={14} />
+                          </button>
+                      )}
+                      
+                      {item.interaction.status === TenderStatus.TODO && (
+                          <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.IN_PROGRESS)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
+                              <ArrowRight size={14} />
+                          </button>
+                      )}
+                      {item.interaction.status === TenderStatus.IN_PROGRESS && (
+                          <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.SUBMITTED)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
+                              <ArrowRight size={14} />
+                          </button>
+                      )}
+                      {item.interaction.status === TenderStatus.SUBMITTED && (
+                         <div className="flex gap-1">
+                              <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.WON)} className="p-1.5 bg-emerald-900/30 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded border border-emerald-900/50" title="Gagné">
+                                  <CheckCircle size={14} />
+                              </button>
+                              <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.LOST)} className="p-1.5 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white rounded border border-red-900/50" title="Perdu">
+                                  <X size={14} />
+                              </button>
+                         </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      );
   };
 
   if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-24 space-y-4">
           <Loader2 className="animate-spin text-primary" size={40} />
-          <p className="text-slate-500 font-medium">Chargement de votre espace de travail...</p>
+          <p className="text-slate-400 font-medium">Chargement du pipeline...</p>
         </div>
       );
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Mes Appels d'Offres (Espace de Travail)</h2>
+    <div className="h-[calc(100vh-100px)] flex flex-col">
+      <div className="flex justify-between items-center mb-6 shrink-0">
+          <h2 className="text-2xl font-bold text-white">Pipeline des Marchés</h2>
+          <div className="flex gap-2">
+              <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div> Total: {data.length} dossiers
+              </div>
+          </div>
+      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 font-semibold text-slate-900 w-1/3">Titre & Acheteur</th>
-                <th className="px-6 py-4 font-semibold text-slate-900">Notes Internes</th>
-                <th className="px-6 py-4 font-semibold text-slate-900">Rappel & Export</th>
-                <th className="px-6 py-4 font-semibold text-slate-900 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {data.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
-                    Aucun appel d'offre sauvegardé pour le moment.
-                  </td>
-                </tr>
-              ) : (
-                data.map(({tender, interaction}) => (
-                  <tr key={tender.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <Link to={`/tender/${tender.id}`} className="font-medium text-slate-900 line-clamp-2 hover:text-primary hover:underline">
-                          {tender.title}
-                      </Link>
-                      <div className="text-xs text-slate-400 mt-1">{tender.buyer}</div>
-                      <div className="mt-2 text-xs font-mono bg-slate-100 inline-block px-1 rounded">{tender.idWeb}</div>
-                      <div className="mt-1">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full border ${
-                              interaction.status === TenderStatus.WON ? 'bg-green-100 text-green-700 border-green-200' :
-                              interaction.status === TenderStatus.LOST ? 'bg-red-100 text-red-700 border-red-200' :
-                              'bg-blue-50 text-blue-700 border-blue-200'
-                          }`}>
-                              {interaction.status}
-                          </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                        <div 
-                            onClick={() => openNoteModal(tender.id, interaction.internalNotes)}
-                            className="cursor-pointer group"
-                        >
-                            {interaction.internalNotes ? (
-                                <p className="text-xs bg-yellow-50 text-yellow-800 p-2 rounded border border-yellow-100 group-hover:border-yellow-300 transition-colors max-w-xs truncate">
-                                    {interaction.internalNotes}
-                                </p>
-                            ) : (
-                                <button className="flex items-center gap-1 text-xs text-slate-400 hover:text-primary">
-                                    <FileText size={12} /> Ajouter une note
-                                </button>
-                            )}
-                        </div>
-                    </td>
-                    <td className="px-6 py-4">
-                       <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-500 w-12">Rendu:</span>
-                                <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs border border-red-100">
-                                    {tender.deadline}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-500 w-12">Rappel:</span>
-                                <input 
-                                    type="date" 
-                                    defaultValue={interaction.customReminderDate}
-                                    className="border border-slate-300 rounded px-2 py-0.5 text-xs w-28"
-                                />
-                            </div>
-                            <button 
-                                onClick={() => handleExportICS(tender)}
-                                className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-1"
-                            >
-                                <Download size={12} /> Ajouter au Calendrier
-                            </button>
-                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                       <button 
-                         onClick={() => handleUpdateStatus(tender.id, TenderStatus.WON)}
-                         className={`p-2 rounded-full transition-colors ${interaction.status === TenderStatus.WON ? 'text-green-600 bg-green-100' : 'text-slate-500 hover:text-green-600 hover:bg-green-50'}`}
-                         title="Marquer comme Gagné"
-                       >
-                         <CheckCircle size={18} />
-                       </button>
-                       <button 
-                         onClick={() => handleUpdateStatus(tender.id, TenderStatus.LOST)}
-                         className={`p-2 rounded-full transition-colors ${interaction.status === TenderStatus.LOST ? 'text-red-600 bg-red-100' : 'text-slate-500 hover:text-red-600 hover:bg-red-50'}`}
-                         title="Marquer comme Perdu/Rejeté"
-                       >
-                         <XCircle size={18} />
-                       </button>
-                       <button 
-                         onClick={() => handleUpdateStatus(tender.id, TenderStatus.BLACKLISTED)}
-                         className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-200 rounded-full transition-colors"
-                         title="Supprimer"
-                       >
-                         <Trash2 size={18} />
-                       </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="flex-1 overflow-x-auto overflow-y-hidden pb-4">
+        <div className="flex h-full gap-6 min-w-[1000px]">
+            
+            {/* COL 1: A QUALIFIER */}
+            <div className="flex-1 min-w-[280px] flex flex-col bg-slate-900/30 border border-slate-800/50 rounded-2xl h-full">
+                <div className="p-4 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                    <h3 className="font-bold text-slate-200 flex items-center gap-2"><CheckCircle size={16} className="text-slate-500"/> À Qualifier</h3>
+                    <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{getColumnData(TenderStatus.TODO).length}</span>
+                </div>
+                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                    {getColumnData(TenderStatus.TODO).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                </div>
+            </div>
+
+            {/* COL 2: EN REDACTION */}
+            <div className="flex-1 min-w-[280px] flex flex-col bg-blue-900/10 border border-blue-900/20 rounded-2xl h-full">
+                <div className="p-4 border-b border-blue-900/20 flex justify-between items-center bg-blue-900/20 rounded-t-2xl">
+                    <h3 className="font-bold text-blue-100 flex items-center gap-2"><BrainCircuit size={16} className="text-blue-400"/> En Rédaction</h3>
+                    <span className="text-xs bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30">{getColumnData(TenderStatus.IN_PROGRESS).length}</span>
+                </div>
+                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                    {getColumnData(TenderStatus.IN_PROGRESS).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                </div>
+            </div>
+
+            {/* COL 3: SOUMIS */}
+            <div className="flex-1 min-w-[280px] flex flex-col bg-slate-900/30 border border-slate-800/50 rounded-2xl h-full">
+                <div className="p-4 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                    <h3 className="font-bold text-slate-200 flex items-center gap-2"><ArrowRight size={16} className="text-purple-400"/> Offre Soumise</h3>
+                    <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{getColumnData(TenderStatus.SUBMITTED).length}</span>
+                </div>
+                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                    {getColumnData(TenderStatus.SUBMITTED).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                </div>
+            </div>
+
+            {/* COL 4: TERMINE */}
+            <div className="flex-1 min-w-[280px] flex flex-col bg-slate-900/30 border border-slate-800/50 rounded-2xl h-full opacity-80">
+                <div className="p-4 border-b border-slate-800/50 flex justify-between items-center bg-slate-900/50 rounded-t-2xl">
+                    <h3 className="font-bold text-slate-400">Terminé</h3>
+                    <span className="text-xs bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full">
+                        {getColumnData(TenderStatus.WON).length + getColumnData(TenderStatus.LOST).length}
+                    </span>
+                </div>
+                <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+                    {getColumnData(TenderStatus.WON).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                    {getColumnData(TenderStatus.LOST).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                </div>
+            </div>
+
         </div>
       </div>
 
       {/* Notes Modal */}
       {editingNoteId && (
-        <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
-             <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+             <div className="bg-surface border border-slate-700 rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in duration-200">
                 <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-slate-900">Notes Internes</h3>
-                    <button onClick={() => setEditingNoteId(null)}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
+                    <h3 className="font-bold text-white">Notes Internes</h3>
+                    <button onClick={() => setEditingNoteId(null)}><X size={20} className="text-slate-500 hover:text-white"/></button>
                 </div>
                 <textarea 
-                    className="w-full h-32 border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none"
+                    className="w-full h-32 bg-background border border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none text-white placeholder-slate-600"
                     placeholder="Avancement, questions à poser, stratégie de réponse..."
                     value={currentNote}
                     onChange={(e) => setCurrentNote(e.target.value)}
                 />
                 <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-slate-600 text-sm font-medium">Annuler</button>
-                    <button onClick={saveNote} className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-700">Enregistrer</button>
+                    <button onClick={() => setEditingNoteId(null)} className="px-4 py-2 text-slate-400 text-sm font-medium hover:text-white">Annuler</button>
+                    <button onClick={saveNote} className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600">Enregistrer</button>
                 </div>
              </div>
         </div>

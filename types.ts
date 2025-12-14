@@ -1,10 +1,12 @@
 
 export enum TenderStatus {
-  TODO = 'A traiter',
-  SAVED = 'Sauvegardé',
-  BLACKLISTED = 'Blacklisté',
+  TODO = 'À Qualifier',      // Arrivée depuis le Dashboard
+  IN_PROGRESS = 'En Rédaction', // On bosse dessus
+  SUBMITTED = 'Offre Soumise', // En attente réponse
   WON = 'Gagné',
-  LOST = 'Perdu/Rejeté'
+  LOST = 'Perdu',
+  BLACKLISTED = 'Rejeté',     // Archivé/Poubelle
+  SAVED = 'Sauvegardé'
 }
 
 export interface DashboardFilters {
@@ -21,13 +23,24 @@ export interface DashboardFilters {
 
 export interface UserProfile {
   id: string;
+  // Identity
   companyName: string;
-  // Permanent Filters (Backend Layer)
-  cpvCodes: string; // Comma separated
-  scope: 'France' | 'Europe' | 'Custom'; // New Scope Selector
-  targetDepartments: string; // Comma separated
-  negativeKeywords: string;
+  siret?: string;
+  address?: string;
+  website?: string;
+  companySize?: string; // TPE, PME, ETI...
+
+  // Expertise (Backend Layer)
   specialization: string; 
+  cpvCodes: string; // Comma separated
+  targetSectors?: string; // Comma separated (Tags)
+  certifications?: string; // Comma separated (Tags)
+  negativeKeywords: string;
+
+  // Geography
+  scope: string; // Changed from 'France' to allow comparisons with 'Custom', 'Europe'
+  targetDepartments: string; // Comma separated (Tags)
+  
   subscriptionStatus: 'Active' | 'Suspended';
   // Saved View State (Frontend Layer)
   savedDashboardFilters?: DashboardFilters;
@@ -38,6 +51,14 @@ export interface AIStrategyAnalysis {
   strengths: string[];
   workload: 'Faible' | 'Moyenne' | 'Élevée';
   questions: string[];
+}
+
+export interface TenderContact {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    urlBuyerProfile?: string;
 }
 
 export interface Tender {
@@ -56,6 +77,9 @@ export interface Tender {
   descriptors: string[]; // descripteur_libelle
   procedureType: string; // e.g., "Ouvert", "Adapté"
   
+  // Contact Info
+  contact?: TenderContact;
+
   // AI Extracted/Calculated
   aiSummary: string;
   compatibilityScore: number;
@@ -64,12 +88,28 @@ export interface Tender {
   fullDescription?: string; 
 }
 
+export interface ChatMessage {
+    role: 'user' | 'model';
+    text: string;
+}
+
 export interface UserInteraction {
   tenderId: string;
   status: TenderStatus;
   customReminderDate?: string;
   internalNotes?: string;
   aiAnalysisResult?: AIStrategyAnalysis; // Persisted AI Analysis
+  chatHistory?: ChatMessage[]; // Persisted Chat History
+}
+
+export interface AppNotification {
+    id: string;
+    type: 'deadline' | 'reminder';
+    title: string;
+    message: string;
+    date: string; // ISO Date
+    tenderId: string;
+    isRead: boolean;
 }
 
 export interface ChartData {

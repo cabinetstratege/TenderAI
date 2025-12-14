@@ -1,36 +1,130 @@
-import { Tender, UserProfile, UserInteraction, TenderStatus, AIStrategyAnalysis } from '../types';
+
+import { Tender, UserProfile, UserInteraction, TenderStatus, AIStrategyAnalysis, ChatMessage, TenderContact } from '../types';
 import { MOCK_TENDERS } from './mockData';
 import { supabase } from './supabaseClient';
 
 const BOAMP_API_URL = "https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records";
 const STORAGE_TENDERS_CACHE_KEY = 'tenderai_tenders_cache';
+const STORAGE_VISITED_KEY = 'tenderai_visited_ids';
+
+/**
+ * Génère un résumé intelligent (Smart Snippet) basé sur les mots-clés du profil.
+ * Évite de répéter le titre et cherche la phrase la plus pertinente.
+ */
+const generateSmartSummary = (title: string, fullDescription: string, profile: UserProfile): string => {
+    // 1. Nettoyage de base
+    let text = fullDescription
+        .replace(/Objet du marché :/gi, '')
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    // Si le texte commence par le titre, on le retire pour éviter la répétition,
+    // MAIS SEULEMENT si le texte restant est assez long. Sinon on garde tout.
+    if (text.startsWith(title) && text.length > title.length + 50) {
+        text = text.replace(title, '').trim();
+    }
+
+    // Si on a rien, on renvoie une phrase générique
+    if (!text || text.length < 5) {
+        return "Aucune description détaillée fournie par l'acheteur.";
+    }
+
+    if (!profile.specialization) {
+        return text.substring(0, 180) + (text.length > 180 ? '...' : '');
+    }
+
+    // 2. Identification des mots-clés importants
+    const keywords = profile.specialization
+        .toLowerCase()
+        .split(/[\s,]+/)
+        .filter(w => w.length > 3); // Ignorer les mots courts (le, de, et...)
+
+    // 3. Découpage en phrases
+    // Regex simple pour couper sur . ! ?
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+
+    // 4. Scoring des phrases
+    let bestSentence = "";
+    let maxScore = -1;
+
+    sentences.forEach(sentence => {
+        let score = 0;
+        const lowerSent = sentence.toLowerCase();
+        
+        keywords.forEach(kw => {
+            if (lowerSent.includes(kw)) score += 10;
+        });
+
+        // Bonus si la phrase contient des chiffres (souvent des quantités ou budget)
+        if (/\d/.test(sentence)) score += 2;
+
+        // Pénalité si la phrase est trop courte (souvent du bruit)
+        if (sentence.length < 20) score -= 5;
+
+        if (score > maxScore) {
+            maxScore = score;
+            bestSentence = sentence;
+        }
+    });
+
+    // 5. Résultat
+    if (maxScore > 0) {
+        // On retourne la meilleure phrase, et peut-être la suivante pour le contexte
+        return bestSentence.trim();
+    } else {
+        // Fallback propre : on prend le début mais on saute les phrases administratives courantes
+        return text.substring(0, 180) + (text.length > 180 ? '...' : '');
+    }
+};
 
 /**
  * Calcul basique d'un score de compatibilité (Simulation de l'IA côté client)
  */
 const calculateLocalScore = (tenderText: string, profile: UserProfile): number => {
-    let score = 50; 
+    let score = 40; // Score de base plus bas
     const text = tenderText.toLowerCase();
     
+    // Bonus Spécialisation
     if (profile.specialization) {
-        const specKeywords = profile.specialization.toLowerCase().split(' ').filter(w => w.length > 4);
+        const specKeywords = profile.specialization.toLowerCase().split(/[\s,]+/).filter(w => w.length > 3);
+        let matches = 0;
         specKeywords.forEach(kw => {
-            if (text.includes(kw)) score += 10;
+            if (text.includes(kw)) matches++;
+        });
+        // Logarithmique pour ne pas exploser le score juste avec des répétitions
+        score += Math.min(40, matches * 8); 
+    }
+
+    // Bonus CPV (Si le code CPV match, c'est très fort)
+    if (profile.cpvCodes) {
+        const cpvs = profile.cpvCodes.split(',').map(s => s.trim());
+        // Note: BOAMP ne renvoie pas toujours les CPV dans la liste simple, faudrait checker le raw data plus profond
+        // Ici on suppose que le texte contient peut-être le code
+        cpvs.forEach(cpv => {
+            if (text.includes(cpv)) score += 20;
         });
     }
 
+    // Malus Mots-clés Négatifs (Très fort)
     if (profile.negativeKeywords) {
         const negKeywords = profile.negativeKeywords.toLowerCase().split(',').map(s => s.trim()).filter(s => s);
         negKeywords.forEach(kw => {
-            if (text.includes(kw)) score -= 40;
+            if (text.includes(kw)) score = 5; // Disqualification quasi immédiate
         });
     }
 
-    return Math.max(5, Math.min(99, score));
+    // Malus Région (Si Scope France, pas de malus, sinon on vérifie)
+    // Ce check est déjà fait en amont par l'API filter, mais on affine ici
+    if (profile.targetDepartments && profile.scope === 'Custom') {
+        // Si aucun département du user n'est trouvé dans le texte (ou les métadonnées), on baisse le score
+        // (Difficile à faire parfaitement sur le texte seul sans structured data, on laisse ça au filtre API)
+    }
+
+    return Math.max(5, Math.min(98, score));
 };
 
 // --- CACHE HELPERS (Local Only for content) ---
-// We still cache full tender objects locally because Supabase only stores IDs and Status.
 const getStoredTendersCache = (): Tender[] => {
     const stored = localStorage.getItem(STORAGE_TENDERS_CACHE_KEY);
     return stored ? JSON.parse(stored) : [...MOCK_TENDERS];
@@ -38,7 +132,6 @@ const getStoredTendersCache = (): Tender[] => {
 
 const saveToTendersCache = (tender: Tender) => {
     const cache = getStoredTendersCache();
-    // Update or push
     const index = cache.findIndex(t => t.id === tender.id);
     if (index >= 0) {
         cache[index] = tender;
@@ -65,19 +158,19 @@ const fetchUserInteractions = async (): Promise<UserInteraction[]> => {
         return [];
     }
 
-    // Map DB to Type
     return data.map((row: any) => ({
         tenderId: row.tender_id,
         status: row.status as TenderStatus,
         internalNotes: row.internal_notes,
         customReminderDate: row.custom_reminder_date,
-        aiAnalysisResult: row.ai_analysis_result
+        aiAnalysisResult: row.ai_analysis_result,
+        chatHistory: row.chat_history // Mapping chat history
     }));
 };
 
 export const tenderService = {
   
-  getAuthorizedTenders: async (user: UserProfile): Promise<Tender[]> => {
+  getAuthorizedTenders: async (user: UserProfile, offset: number = 0): Promise<Tender[]> => {
     try {
         const interactions = await fetchUserInteractions();
         const blacklist = interactions
@@ -96,7 +189,8 @@ export const tenderService = {
         }
 
         const params = new URLSearchParams({
-            limit: '50',
+            limit: '20', 
+            offset: offset.toString(), 
             order_by: 'dateparution desc',
         });
         if (whereClause) {
@@ -119,39 +213,63 @@ export const tenderService = {
             try {
                 details = JSON.parse(record.donnees || '{}');
             } catch (e) {
-                console.warn("Erreur parsing JSON données BOAMP", e);
+                // Ignore parsing errors
             }
 
-            const description = details.OBJET?.OBJET_COMPLET || record.objet || "";
+            const title = record.objet || "Sans titre";
+            
+            // Construction d'une description riche en concaténant plusieurs champs
+            const descriptionParts = [
+                details.OBJET?.OBJET_COMPLET,
+                details.OBJET?.CARACTERISTIQUES?.QUANTITE, // Contient souvent le détail technique
+                details.RESUME_OBJET,
+                record.objet // Titre en dernier recours
+            ];
+            const rawDescription = descriptionParts.filter(Boolean).join(' '); // Join non-null parts
+
             const rawBudget = details.OBJET?.CARACTERISTIQUES?.QUANTITE || "";
             const budgetMatch = rawBudget.match(/(\d[\d\s]*)(?:€|euros)/i);
             const estimatedBudget = budgetMatch ? parseInt(budgetMatch[1].replace(/\s/g, '')) : undefined;
 
-            const fullText = `${record.objet} ${description}`;
+            const fullText = `${title} ${rawDescription} ${record.descripteur_libelle?.join(' ') || ''}`;
+            
+            // Nouveau calcul de score plus précis
             const score = calculateLocalScore(fullText, user);
+            
+            // Nouveau résumé intelligent
+            const smartSummary = generateSmartSummary(title, rawDescription, user);
+            
+            // Extraction des contacts
+            const identity = details.IDENTITE || {};
+            const contact: TenderContact = {
+                name: identity.CORRESPONDANT || identity.CONTACT || "Non spécifié",
+                email: identity.MEL,
+                phone: identity.TEL,
+                address: [identity.ADRESSE, identity.CP, identity.VILLE].filter(Boolean).join(', '),
+                urlBuyerProfile: identity.URL_PROFIL_ACHETEUR
+            };
 
             return {
                 id: record.idweb,
                 idWeb: record.idweb,
-                title: record.objet,
+                title: title,
                 buyer: record.nomacheteur,
                 deadline: record.datelimitereponse ? record.datelimitereponse.split('T')[0] : 'Non spécifiée',
                 linkDCE: record.url_avis,
-                aiSummary: description.substring(0, 150) + (description.length > 150 ? '...' : ''),
+                aiSummary: smartSummary,
                 compatibilityScore: score,
                 estimatedBudget: estimatedBudget,
-                fullDescription: description,
+                fullDescription: rawDescription,
                 departments: record.code_departement || [],
                 descriptors: record.descripteur_libelle || [],
                 procedureType: record.procedure_libelle || "Procédure non spécifiée",
-                relevantClientIds: [user.id]
+                relevantClientIds: [user.id],
+                contact: contact // Ajout du contact
             } as Tender;
         });
 
-        // Cache fetched tenders
         tenders.forEach(t => saveToTendersCache(t));
 
-        // 3. Filtrer les AO déjà traités
         return tenders.filter(t => !blacklist.includes(t.id));
 
     } catch (error) {
@@ -180,12 +298,10 @@ export const tenderService = {
   },
 
   updateInteraction: async (tenderId: string, status: TenderStatus, notes?: string, tenderObject?: Tender): Promise<void> => {
-    // 1. Cache locally
     if (tenderObject) {
         saveToTendersCache(tenderObject);
     }
 
-    // 2. Upsert to Supabase
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     const userId = session.user.id;
@@ -229,5 +345,66 @@ export const tenderService = {
         });
       
       if (error) console.error("Error saving analysis", error);
+  },
+
+  saveChatHistory: async (tenderId: string, history: ChatMessage[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const userId = session.user.id;
+
+      // Upsert with history
+      const { error } = await supabase
+        .from('user_interactions')
+        .upsert({
+            user_id: userId,
+            tender_id: tenderId,
+            chat_history: history,
+        }, { onConflict: 'user_id, tender_id' });
+
+      if (error) console.error("Error saving chat history", error);
+  },
+
+  exportUserData: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      
+      const interactions = await fetchUserInteractions();
+      const profileData = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+
+      const exportObj = {
+          profile: profileData.data,
+          interactions: interactions,
+          exportedAt: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "tenderai_export.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+  },
+
+  // --- VISITED (READ) STATUS METHODS ---
+  getVisitedIds: (): string[] => {
+      try {
+          const stored = localStorage.getItem(STORAGE_VISITED_KEY);
+          return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+          return [];
+      }
+  },
+
+  markTenderAsVisited: (tenderId: string) => {
+      try {
+          const visited = tenderService.getVisitedIds();
+          if (!visited.includes(tenderId)) {
+              visited.push(tenderId);
+              localStorage.setItem(STORAGE_VISITED_KEY, JSON.stringify(visited));
+          }
+      } catch (e) {
+          console.error("Error marking tender as visited", e);
+      }
   }
 };
