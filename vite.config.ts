@@ -9,6 +9,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      external: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        '@google/genai',
+        'lucide-react',
+        'recharts',
+        'jspdf',
+        '@supabase/supabase-js',
+        'mapbox-gl',
+        'react-map-gl'
+      ]
+    }
   },
   define: {
     // SAFELY inject API keys.
