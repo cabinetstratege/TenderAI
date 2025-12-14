@@ -37,7 +37,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       if (feature) {
         const bounds = calculateBounds(feature.geometry);
         if (bounds) {
-          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 6.2, offset: [0, 50], duration: 1500 });
+          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 6.2, offset: [0, 100], duration: 1500 });
         }
       }
     } else {
@@ -113,8 +113,8 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         {isMapLoaded && (
             <Source id="france-depts" type="geojson" data={GEOJSON_SOURCE}>
             <Layer {...baseOutlineLayer} />
-            <Layer {...highlightLayer} beforeId="waterway-label" />
-            <Layer {...highlightOutlineLayer} beforeId="waterway-label"/>
+            <Layer {...highlightLayer} />
+            <Layer {...highlightOutlineLayer} />
             </Source>
         )}
       </Map>
