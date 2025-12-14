@@ -100,7 +100,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         initialViewState={{
           longitude: 2.2137,
           latitude: 46.2276,
-          zoom: 4.2
+          zoom: 3.2
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLE}

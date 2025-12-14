@@ -274,7 +274,7 @@ const TenderDetail: React.FC = () => {
                             <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><MapPin size={20} /></div>
                             <div className="min-w-0">
                                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Lieu</p>
-                                <p className="text-sm font-semibold text-slate-100 truncate">Dépts: {tender.departments.join(', ')}</p>
+                                <p className="text-sm font-semibold text-slate-100 truncate">Départements: {tender.departments.join(', ')}</p>
                             </div>
                         </div>
                         {/* MAP COMPONENT INTEGRATION */}
