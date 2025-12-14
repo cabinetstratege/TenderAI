@@ -148,50 +148,6 @@ useEffect(() => {
 };
 
 // --- Helper: Calculate Bounding Box from GeoJSON Geometry ---
-// const calculateBounds = (geometry: any): [[number, number], [number, number]] | null => {
-//   let coords: number[][] = [];
-  
-//   // Handle Polygon (Standard Depts) and MultiPolygon (e.g., Coastal Depts with islands)
-//   if (geometry.type === 'Polygon') {
-//       coords = geometry.coordinates.flat();
-//   } else if (geometry.type === 'MultiPolygon') {
-//       // Find the polygon with the most points (Main landmass)
-//       // This avoids zooming out too much or centering on water for coastal departments
-//       let maxPoints = -1;
-//       let mainPolyCoords: any[] = [];
-
-//       geometry.coordinates.forEach((poly: any[]) => {
-//           // poly is an array of rings. poly[0] is the outer ring.
-//           // We use the number of points in the outer ring as a proxy for size/importance
-//           if (poly[0].length > maxPoints) {
-//               maxPoints = poly[0].length;
-//               mainPolyCoords = poly;
-//           }
-//       });
-      
-//       if (mainPolyCoords.length > 0) {
-//           coords = mainPolyCoords.flat();
-//       } else {
-//           // Fallback if empty
-//           coords = geometry.coordinates.flat(2);
-//       }
-//   } else {
-//       return null;
-//   }
-
-//   if (coords.length === 0) return null;
-
-//   let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
-
-//   for (const [lng, lat] of coords) {
-//       if (lng < minLng) minLng = lng;
-//       if (lng > maxLng) maxLng = lng;
-//       if (lat < minLat) minLat = lat;
-//       if (lat > maxLat) maxLat = lat;
-//   }
-
-//   return [[minLng, minLat], [maxLng, maxLat]];
-// };
 
 const ringArea = (ring: number[][]) => {
   let a = 0;
