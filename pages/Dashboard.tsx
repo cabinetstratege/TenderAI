@@ -205,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
                           <span className="text-xs font-bold uppercase">Pertinence</span>
                       </div>
                       <p className="text-2xl font-bold text-white">{heroStats.highMatchCount}</p>
-                      <p className="text-xs text-blue-200">AO > 75% Match</p>
+                      <p className="text-xs text-blue-200">AO &gt; 75% Match</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-xl p-4 min-w-[140px] hover:bg-white/15 transition-colors">
                       <div className="flex items-center gap-2 text-amber-300 mb-2">
