@@ -37,7 +37,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       if (feature) {
         const bounds = calculateBounds(feature.geometry);
         if (bounds) {
-          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 5.2, offset: [-312, -20], duration: 1500 });
+          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 5.2, offset: [-100, -20], duration: 1500 });
         }
       }
     } else {
