@@ -249,7 +249,7 @@ const TenderDetail: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start h-[calc(100vh-140px)]">
         
         {/* LEFT COLUMN: Identity Card (Fixed Info) */}
-        <div className="lg:col-span-4 space-y-6 h-full overflow-y-auto custom-scrollbar pr-2">
+        <div className="lg:col-span-6 space-y-6 h-full overflow-y-auto custom-scrollbar pr-2">
             <div className="glass-panel p-6 rounded-2xl shadow-xl space-y-8 relative overflow-hidden">
                 <div className="relative z-10 text-center">
                     <div className={`inline-flex flex-col items-center justify-center w-32 h-32 rounded-full border-4 bg-gradient-to-br shadow-[0_0_30px_rgba(0,0,0,0.3)] ${scoreColor} mb-4`}>
@@ -353,7 +353,7 @@ const TenderDetail: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Unified Intelligence Workspace */}
-        <div className="lg:col-span-8 flex flex-col h-full glass-panel rounded-2xl border border-white/5 shadow-xl overflow-hidden">
+        <div className="lg:col-span-6 flex flex-col h-full glass-panel rounded-2xl border border-white/5 shadow-xl overflow-hidden">
              
              {/* Tabs */}
              <div className="flex p-2 bg-slate-900/50 border-b border-white/5 gap-1 shrink-0">
