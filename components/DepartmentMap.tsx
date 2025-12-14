@@ -13,6 +13,7 @@ const MAP_STYLE = "mapbox://styles/colinjamier/cmj5rlaod000c01s85lvyfybn";
 const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   const mapRef = useRef<MapRef>(null);
   const [geoJsonData, setGeoJsonData] = useState<any>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
 
   // Clean department codes (remove names if present, e.g., "01 - Ain" -> "01")
   const codes = departments.map(d => d.split(' ')[0].trim());
@@ -43,7 +44,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       // Reset to France view if multiple or none
       mapRef.current.flyTo({
         center: [2.2137, 46.2276],
-        zoom: 3.2,
+        zoom: 2.2,
         duration: 1500
       });
     }
@@ -100,19 +101,22 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         initialViewState={{
           longitude: 2.2137,
           latitude: 46.2276,
-          zoom: 3.2
+          zoom: 2.2
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLE}
         mapboxAccessToken={MAPBOX_TOKEN}
         attributionControl={false}
         scrollZoom={false} // Prevent scrolling interfering with page scroll
+        onLoad={() => setIsMapLoaded(true)}
       >
-        <Source id="france-depts" type="geojson" data={GEOJSON_SOURCE}>
-          <Layer {...baseOutlineLayer} />
-          <Layer {...highlightLayer} />
-          <Layer {...highlightOutlineLayer} />
-        </Source>
+        {isMapLoaded && (
+            <Source id="france-depts" type="geojson" data={GEOJSON_SOURCE}>
+            <Layer {...baseOutlineLayer} />
+            <Layer {...highlightLayer} />
+            <Layer {...highlightOutlineLayer} />
+            </Source>
+        )}
       </Map>
       
       {/* Legend overlay */}
