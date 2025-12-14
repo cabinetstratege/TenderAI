@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Map, { Source, Layer, FillLayer, LineLayer } from 'react-map-gl';
+import { Map, Source, Layer, FillLayer, LineLayer } from 'react-map-gl';
 
 interface DepartmentMapProps {
   departments: string[]; // List of department codes (e.g. ['75', '33'])
@@ -40,6 +40,11 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
 
   if (!MAPBOX_TOKEN) {
     return <div className="bg-slate-900 h-48 rounded-xl flex items-center justify-center text-slate-500 text-xs">Mapbox Token Missing</div>;
+  }
+
+  // Safety check in case Map import fails or is not a component
+  if (!Map) {
+      return null;
   }
 
   return (
