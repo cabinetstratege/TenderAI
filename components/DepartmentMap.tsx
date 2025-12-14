@@ -114,7 +114,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
             <Source id="france-depts" type="geojson" data={GEOJSON_SOURCE}>
             <Layer {...baseOutlineLayer} />
             <Layer {...highlightLayer} beforeId="waterway-label" />
-            <Layer {...highlightOutlineLayer} />
+            <Layer {...highlightOutlineLayer} beforeId="waterway-label"/>
             </Source>
         )}
       </Map>
