@@ -37,7 +37,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       if (feature) {
         const bounds = calculateBounds(feature.geometry);
         if (bounds) {
-          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 5.2, offset: [-500, -100], duration: 1500 });
+          mapRef.current.fitBounds(bounds, { padding: 40, maxZoom: 5.2, offset: [-400, -50], duration: 1500 });
         }
       }
     } else {
@@ -58,7 +58,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
     type: 'fill',
     paint: {
       'fill-color': '#29b5ff', // Sky-400 (Light Blue)
-      'fill-opacity': 0.7,
+      'fill-opacity': 1,
     },
     filter: ['in', ['get', 'code'], ['literal', codes]]
   };
