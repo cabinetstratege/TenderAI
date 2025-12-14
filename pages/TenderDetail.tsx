@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tenderService } from '../services/tenderService';
@@ -194,10 +193,17 @@ const TenderDetail: React.FC = () => {
 
   const handleShare = () => {
       if(!data?.tender) return;
+      let shareUrl = "";
+      try {
+          shareUrl = window.location.href;
+      } catch(err) {
+          shareUrl = window.location.pathname; // Fallback
+      }
+
       const shareData = {
           title: data.tender.title,
           text: `Regarde cet appel d'offre : ${data.tender.title}`,
-          url: window.location.href
+          url: shareUrl
       };
       if (navigator.share) {
           navigator.share(shareData).catch(console.error);

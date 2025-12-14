@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Tender, UserProfile, TenderStatus } from '../types';
 import { Calendar, Building, MapPin, Search, XCircle, BookmarkPlus, Euro, Share2, Tag, Eye, ArrowRight } from 'lucide-react';
@@ -37,10 +36,18 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
 
   const handleShare = (e: React.MouseEvent) => {
       e.preventDefault();
+      let shareUrl = "";
+      try {
+        shareUrl = window.location.origin + `/#/tender/${tender.id}`;
+      } catch (err) {
+        // Fallback for sandboxed environments where origin access might fail
+        shareUrl = `/#/tender/${tender.id}`;
+      }
+
       const shareData = {
           title: tender.title,
           text: `Regarde cet appel d'offre : ${tender.title} (${tender.buyer})`,
-          url: window.location.origin + `/#/tender/${tender.id}`
+          url: shareUrl
       };
       if (navigator.share) {
           navigator.share(shareData).catch(console.error);

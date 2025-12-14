@@ -10,7 +10,7 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null,
@@ -23,6 +23,26 @@ class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
   }
+
+  private handleHomeClick = () => {
+    try {
+      // Safer navigation for sandboxed/iframe environments using HashRouter
+      window.location.hash = '/';
+      window.location.reload();
+    } catch (e) {
+      console.error("Navigation failed", e);
+      // Fallback
+      window.location.reload();
+    }
+  };
+
+  private handleRefreshClick = () => {
+     try {
+       window.location.reload();
+     } catch (e) {
+       console.error("Reload failed", e);
+     }
+  };
 
   public render(): ReactNode {
     if (this.state.hasError) {
@@ -47,13 +67,13 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex gap-3 justify-center">
               <button 
-                onClick={() => window.location.href = '/'}
+                onClick={this.handleHomeClick}
                 className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <Home size={18} /> Accueil
               </button>
               <button 
-                onClick={() => window.location.reload()}
+                onClick={this.handleRefreshClick}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
               >
                 <RefreshCw size={18} /> Rafraîchir
