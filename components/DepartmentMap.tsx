@@ -43,7 +43,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
       // Reset to France view if multiple or none
       mapRef.current.flyTo({
         center: [2.2137, 46.2276],
-        zoom: 4.2,
+        zoom: 3.2,
         duration: 1500
       });
     }

@@ -102,7 +102,7 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-400">
              <MapPin size={14} className="text-slate-500 shrink-0" />
-             <span className="truncate">Dépts: {tender.departments.join(', ')}</span>
+             <span className="truncate">Départements: {tender.departments.join(', ')}</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Calendar size={14} className="text-slate-500 shrink-0" />
