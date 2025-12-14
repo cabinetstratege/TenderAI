@@ -33,7 +33,7 @@ useEffect(() => {
   // Aucun département sélectionné → rester centrée sur la France
   if (codes.length === 0) {
     mapRef.current.flyTo({
-      center: [2.2137, 46.2276],
+      center: [3.218369, 46.891570],
       zoom: 4.2,
       duration: 0
     });
@@ -60,7 +60,7 @@ useEffect(() => {
 
   // Plusieurs départements → vue France
   mapRef.current.flyTo({
-    center: [2.2137, 46.2276],
+    center: [3.218369, 46.891570],
     zoom: 4.2,
     duration: 1500
   });
