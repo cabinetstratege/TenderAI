@@ -1,9 +1,91 @@
-
 import React, { useState, useEffect } from 'react';
 import { tenderService } from '../services/tenderService';
 import { TenderStatus, Tender, UserInteraction } from '../types';
 import { Loader2, ArrowRight, ArrowLeft, FileText, X, AlertCircle, CheckCircle, BrainCircuit } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+interface KanbanCardProps {
+    item: {tender: Tender, interaction: UserInteraction};
+    onNoteClick: (tenderId: string, note: string) => void;
+    onStatusChange: (tenderId: string, status: TenderStatus) => void;
+}
+
+const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange }) => {
+    const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    
+    return (
+        <div className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-600 transition-all flex flex-col gap-3 group relative">
+            <div className="flex justify-between items-start">
+                <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded">{item.tender.idWeb}</span>
+                {daysRemaining < 5 ? (
+                    <span className="text-[10px] font-bold text-red-400 flex items-center gap-1 bg-red-950/30 px-2 py-0.5 rounded-full border border-red-900/50">
+                        <AlertCircle size={10}/> J-{daysRemaining}
+                    </span>
+                ) : (
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-900/50">
+                        J-{daysRemaining}
+                    </span>
+                )}
+            </div>
+            
+            <Link to={`/tender/${item.tender.id}`} className="font-semibold text-sm text-slate-200 line-clamp-2 hover:text-primary transition-colors">
+                {item.tender.title}
+            </Link>
+            <p className="text-xs text-slate-500 truncate">{item.tender.buyer}</p>
+
+            {/* Notes Indicator */}
+            {item.interaction.internalNotes && (
+                <div className="bg-amber-950/20 border border-amber-900/30 p-2 rounded text-[10px] text-amber-200/80 truncate cursor-pointer hover:bg-amber-950/40" onClick={() => onNoteClick(item.tender.id, item.interaction.internalNotes || '')}>
+                    📝 {item.interaction.internalNotes}
+                </div>
+            )}
+
+            {/* Actions Footer */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800 mt-auto">
+                <button onClick={() => onNoteClick(item.tender.id, item.interaction.internalNotes || '')} className="text-slate-500 hover:text-white" title="Notes">
+                    <FileText size={14} />
+                </button>
+                
+                <div className="flex gap-1">
+                    {item.interaction.status !== TenderStatus.TODO && (
+                        <button 
+                          onClick={() => {
+                              const prev = item.interaction.status === TenderStatus.IN_PROGRESS ? TenderStatus.TODO 
+                                         : item.interaction.status === TenderStatus.SUBMITTED ? TenderStatus.IN_PROGRESS 
+                                         : TenderStatus.SUBMITTED;
+                              onStatusChange(item.tender.id, prev);
+                          }}
+                          className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
+                        >
+                            <ArrowLeft size={14} />
+                        </button>
+                    )}
+                    
+                    {item.interaction.status === TenderStatus.TODO && (
+                        <button onClick={() => onStatusChange(item.tender.id, TenderStatus.IN_PROGRESS)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
+                            <ArrowRight size={14} />
+                        </button>
+                    )}
+                    {item.interaction.status === TenderStatus.IN_PROGRESS && (
+                        <button onClick={() => onStatusChange(item.tender.id, TenderStatus.SUBMITTED)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
+                            <ArrowRight size={14} />
+                        </button>
+                    )}
+                    {item.interaction.status === TenderStatus.SUBMITTED && (
+                       <div className="flex gap-1">
+                            <button onClick={() => onStatusChange(item.tender.id, TenderStatus.WON)} className="p-1.5 bg-emerald-900/30 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded border border-emerald-900/50" title="Gagné">
+                                <CheckCircle size={14} />
+                            </button>
+                            <button onClick={() => onStatusChange(item.tender.id, TenderStatus.LOST)} className="p-1.5 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white rounded border border-red-900/50" title="Perdu">
+                                <X size={14} />
+                            </button>
+                       </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const MyTenders: React.FC = () => {
   const [data, setData] = useState<{tender: Tender, interaction: UserInteraction}[]>([]);
@@ -65,83 +147,6 @@ const MyTenders: React.FC = () => {
       return data.filter(item => item.interaction.status === status);
   };
 
-  const KanbanCard = ({ item }: { item: {tender: Tender, interaction: UserInteraction} }) => {
-      const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-      
-      return (
-          <div className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-600 transition-all flex flex-col gap-3 group relative">
-              <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-mono text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded">{item.tender.idWeb}</span>
-                  {daysRemaining < 5 ? (
-                      <span className="text-[10px] font-bold text-red-400 flex items-center gap-1 bg-red-950/30 px-2 py-0.5 rounded-full border border-red-900/50">
-                          <AlertCircle size={10}/> J-{daysRemaining}
-                      </span>
-                  ) : (
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-900/50">
-                          J-{daysRemaining}
-                      </span>
-                  )}
-              </div>
-              
-              <Link to={`/tender/${item.tender.id}`} className="font-semibold text-sm text-slate-200 line-clamp-2 hover:text-primary transition-colors">
-                  {item.tender.title}
-              </Link>
-              <p className="text-xs text-slate-500 truncate">{item.tender.buyer}</p>
-
-              {/* Notes Indicator */}
-              {item.interaction.internalNotes && (
-                  <div className="bg-amber-950/20 border border-amber-900/30 p-2 rounded text-[10px] text-amber-200/80 truncate cursor-pointer hover:bg-amber-950/40" onClick={() => openNoteModal(item.tender.id, item.interaction.internalNotes)}>
-                      📝 {item.interaction.internalNotes}
-                  </div>
-              )}
-
-              {/* Actions Footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800 mt-auto">
-                  <button onClick={() => openNoteModal(item.tender.id, item.interaction.internalNotes)} className="text-slate-500 hover:text-white" title="Notes">
-                      <FileText size={14} />
-                  </button>
-                  
-                  <div className="flex gap-1">
-                      {item.interaction.status !== TenderStatus.TODO && (
-                          <button 
-                            onClick={() => {
-                                const prev = item.interaction.status === TenderStatus.IN_PROGRESS ? TenderStatus.TODO 
-                                           : item.interaction.status === TenderStatus.SUBMITTED ? TenderStatus.IN_PROGRESS 
-                                           : TenderStatus.SUBMITTED;
-                                handleUpdateStatus(item.tender.id, prev);
-                            }}
-                            className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white"
-                          >
-                              <ArrowLeft size={14} />
-                          </button>
-                      )}
-                      
-                      {item.interaction.status === TenderStatus.TODO && (
-                          <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.IN_PROGRESS)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
-                              <ArrowRight size={14} />
-                          </button>
-                      )}
-                      {item.interaction.status === TenderStatus.IN_PROGRESS && (
-                          <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.SUBMITTED)} className="p-1.5 bg-slate-800 hover:bg-primary text-slate-300 hover:text-white rounded transition-colors">
-                              <ArrowRight size={14} />
-                          </button>
-                      )}
-                      {item.interaction.status === TenderStatus.SUBMITTED && (
-                         <div className="flex gap-1">
-                              <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.WON)} className="p-1.5 bg-emerald-900/30 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded border border-emerald-900/50" title="Gagné">
-                                  <CheckCircle size={14} />
-                              </button>
-                              <button onClick={() => handleUpdateStatus(item.tender.id, TenderStatus.LOST)} className="p-1.5 bg-red-900/30 hover:bg-red-600 text-red-400 hover:text-white rounded border border-red-900/50" title="Perdu">
-                                  <X size={14} />
-                              </button>
-                         </div>
-                      )}
-                  </div>
-              </div>
-          </div>
-      );
-  };
-
   if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-24 space-y-4">
@@ -172,7 +177,14 @@ const MyTenders: React.FC = () => {
                     <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{getColumnData(TenderStatus.TODO).length}</span>
                 </div>
                 <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {getColumnData(TenderStatus.TODO).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                    {getColumnData(TenderStatus.TODO).map(item => (
+                        <KanbanCard 
+                            key={item.tender.id} 
+                            item={item} 
+                            onNoteClick={openNoteModal} 
+                            onStatusChange={handleUpdateStatus} 
+                        />
+                    ))}
                 </div>
             </div>
 
@@ -183,7 +195,14 @@ const MyTenders: React.FC = () => {
                     <span className="text-xs bg-blue-900/40 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/30">{getColumnData(TenderStatus.IN_PROGRESS).length}</span>
                 </div>
                 <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {getColumnData(TenderStatus.IN_PROGRESS).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                    {getColumnData(TenderStatus.IN_PROGRESS).map(item => (
+                        <KanbanCard 
+                            key={item.tender.id} 
+                            item={item} 
+                            onNoteClick={openNoteModal} 
+                            onStatusChange={handleUpdateStatus} 
+                        />
+                    ))}
                 </div>
             </div>
 
@@ -194,7 +213,14 @@ const MyTenders: React.FC = () => {
                     <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{getColumnData(TenderStatus.SUBMITTED).length}</span>
                 </div>
                 <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {getColumnData(TenderStatus.SUBMITTED).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                    {getColumnData(TenderStatus.SUBMITTED).map(item => (
+                        <KanbanCard 
+                            key={item.tender.id} 
+                            item={item} 
+                            onNoteClick={openNoteModal} 
+                            onStatusChange={handleUpdateStatus} 
+                        />
+                    ))}
                 </div>
             </div>
 
@@ -207,8 +233,22 @@ const MyTenders: React.FC = () => {
                     </span>
                 </div>
                 <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                    {getColumnData(TenderStatus.WON).map(item => <KanbanCard key={item.tender.id} item={item} />)}
-                    {getColumnData(TenderStatus.LOST).map(item => <KanbanCard key={item.tender.id} item={item} />)}
+                    {getColumnData(TenderStatus.WON).map(item => (
+                        <KanbanCard 
+                            key={item.tender.id} 
+                            item={item} 
+                            onNoteClick={openNoteModal} 
+                            onStatusChange={handleUpdateStatus} 
+                        />
+                    ))}
+                    {getColumnData(TenderStatus.LOST).map(item => (
+                        <KanbanCard 
+                            key={item.tender.id} 
+                            item={item} 
+                            onNoteClick={openNoteModal} 
+                            onStatusChange={handleUpdateStatus} 
+                        />
+                    ))}
                 </div>
             </div>
 
