@@ -6,6 +6,7 @@ import { chatWithTender, generateStrategicAnalysis } from '../services/geminiSer
 import { userService } from '../services/userService';
 import { Tender, UserInteraction, TenderStatus, AIStrategyAnalysis, ChatMessage, UserProfile } from '../types';
 import jsPDF from 'jspdf';
+import DepartmentMap from '../components/DepartmentMap';
 import { 
   ArrowLeft, Calendar, MapPin, Building, ExternalLink, Euro, 
   BrainCircuit, Send, Sparkles, AlertTriangle, 
@@ -262,11 +263,17 @@ const TenderDetail: React.FC = () => {
                             <p className="text-sm font-semibold text-slate-100 truncate">{tender.buyer}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-800/40 border border-white/5">
-                        <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><MapPin size={20} /></div>
-                        <div className="min-w-0">
-                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Lieu</p>
-                            <p className="text-sm font-semibold text-slate-100 truncate">Dépts: {tender.departments.join(', ')}</p>
+                    <div className="flex flex-col gap-2 p-3 rounded-xl bg-slate-800/40 border border-white/5">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><MapPin size={20} /></div>
+                            <div className="min-w-0">
+                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Lieu</p>
+                                <p className="text-sm font-semibold text-slate-100 truncate">Dépts: {tender.departments.join(', ')}</p>
+                            </div>
+                        </div>
+                        {/* MAP COMPONENT INTEGRATION */}
+                        <div className="mt-1">
+                             <DepartmentMap departments={tender.departments} />
                         </div>
                     </div>
                     <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-800/40 border border-white/5">
