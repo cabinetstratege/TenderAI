@@ -131,49 +131,84 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
 };
 
 // --- Helper: Calculate Bounding Box from GeoJSON Geometry ---
-const calculateBounds = (geometry: any): [[number, number], [number, number]] | null => {
-  let coords: number[][] = [];
+// const calculateBounds = (geometry: any): [[number, number], [number, number]] | null => {
+//   let coords: number[][] = [];
   
-  // Handle Polygon (Standard Depts) and MultiPolygon (e.g., Coastal Depts with islands)
-  if (geometry.type === 'Polygon') {
-      coords = geometry.coordinates.flat();
-  } else if (geometry.type === 'MultiPolygon') {
-      // Find the polygon with the most points (Main landmass)
-      // This avoids zooming out too much or centering on water for coastal departments
-      let maxPoints = -1;
-      let mainPolyCoords: any[] = [];
+//   // Handle Polygon (Standard Depts) and MultiPolygon (e.g., Coastal Depts with islands)
+//   if (geometry.type === 'Polygon') {
+//       coords = geometry.coordinates.flat();
+//   } else if (geometry.type === 'MultiPolygon') {
+//       // Find the polygon with the most points (Main landmass)
+//       // This avoids zooming out too much or centering on water for coastal departments
+//       let maxPoints = -1;
+//       let mainPolyCoords: any[] = [];
 
-      geometry.coordinates.forEach((poly: any[]) => {
-          // poly is an array of rings. poly[0] is the outer ring.
-          // We use the number of points in the outer ring as a proxy for size/importance
-          if (poly[0].length > maxPoints) {
-              maxPoints = poly[0].length;
-              mainPolyCoords = poly;
-          }
-      });
+//       geometry.coordinates.forEach((poly: any[]) => {
+//           // poly is an array of rings. poly[0] is the outer ring.
+//           // We use the number of points in the outer ring as a proxy for size/importance
+//           if (poly[0].length > maxPoints) {
+//               maxPoints = poly[0].length;
+//               mainPolyCoords = poly;
+//           }
+//       });
       
-      if (mainPolyCoords.length > 0) {
-          coords = mainPolyCoords.flat();
-      } else {
-          // Fallback if empty
-          coords = geometry.coordinates.flat(2);
-      }
-  } else {
-      return null;
+//       if (mainPolyCoords.length > 0) {
+//           coords = mainPolyCoords.flat();
+//       } else {
+//           // Fallback if empty
+//           coords = geometry.coordinates.flat(2);
+//       }
+//   } else {
+//       return null;
+//   }
+
+//   if (coords.length === 0) return null;
+
+//   let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+
+//   for (const [lng, lat] of coords) {
+//       if (lng < minLng) minLng = lng;
+//       if (lng > maxLng) maxLng = lng;
+//       if (lat < minLat) minLat = lat;
+//       if (lat > maxLat) maxLat = lat;
+//   }
+
+//   return [[minLng, minLat], [maxLng, maxLat]];
+// };
+
+const ringArea = (ring: number[][]) => {
+  let a = 0;
+  for (let i=0, j=ring.length-1; i<ring.length; j=i++) {
+    const [x1,y1] = ring[j], [x2,y2] = ring[i];
+    a += (x1*y2 - x2*y1);
   }
+  return Math.abs(a)/2;
+};
 
-  if (coords.length === 0) return null;
-
-  let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
-
-  for (const [lng, lat] of coords) {
-      if (lng < minLng) minLng = lng;
-      if (lng > maxLng) maxLng = lng;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
+const mainPolygon = (geometry: any) => {
+  if (geometry.type === 'Polygon') return geometry;
+  if (geometry.type === 'MultiPolygon') {
+    let best: any = null, bestA = -1;
+    for (const poly of geometry.coordinates) {
+      const outer = poly[0];
+      const A = ringArea(outer);
+      if (A > bestA) { bestA = A; best = poly; }
+    }
+    return best ? { type: 'Polygon', coordinates: best } : null;
   }
+  return null;
+};
 
-  return [[minLng, minLat], [maxLng, maxLat]];
+const calculateBounds = (geometry: any) => {
+  const g = mainPolygon(geometry);
+  if (!g) return null;
+  const coords: number[][] = g.coordinates.flat();
+  let minLng=Infinity,minLat=Infinity,maxLng=-Infinity,maxLat=-Infinity;
+  for (const [lng,lat] of coords) {
+    if (lng<minLng) minLng=lng; if (lng>maxLng) maxLng=lng;
+    if (lat<minLat) minLat=lat; if (lat>maxLat) maxLat=lat;
+  }
+  return [[minLng,minLat],[maxLng,maxLat]] as [[number,number],[number,number]];
 };
 
 export default DepartmentMap;
