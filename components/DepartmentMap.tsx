@@ -57,7 +57,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
     id: 'dept-highlight',
     type: 'fill',
     paint: {
-      'fill-color': '#FF2F00', // Sky-400 (Light Blue)
+      'fill-color': '#29b5ff', // Sky-400 (Light Blue)
       'fill-opacity': 0.7,
     },
     filter: ['in', ['get', 'code'], ['literal', codes]]
