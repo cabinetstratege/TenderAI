@@ -8,7 +8,7 @@ interface DepartmentMapProps {
 const GEOJSON_SOURCE = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson";
 // Use process.env or fallback to the direct string to ensure it works in all environments
 const MAPBOX_TOKEN = process.env.MAPBOX_PUBLIC_KEY;
-const MAP_STYLE = "mapbox://styles/colinjamier/cmj5rlaod000c01s85lvyfybn";
+const MAP_STYLE = "mapbox://styles/colinjamier/cmj632us6003q01s68q1t1a1h";
 
 const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   const mapRef = useRef<MapRef>(null);
