@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Clock, AlertTriangle, X } from 'lucide-react';
+import { Bell, Clock, AlertTriangle, X, CheckCheck } from 'lucide-react';
 import { notificationService } from '../services/notificationService';
 import { AppNotification } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -7,14 +8,14 @@ import { useNavigate } from 'react-router-dom';
 const NotificationCenter: React.FC = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
-    const [hasUnread, setHasUnread] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     const loadNotifications = async () => {
         const notifs = await notificationService.getNotifications();
         setNotifications(notifs);
-        setHasUnread(notifs.length > 0);
+        setUnreadCount(notifs.filter(n => !n.isRead).length);
     };
 
     useEffect(() => {
@@ -23,6 +24,13 @@ const NotificationCenter: React.FC = () => {
         const interval = setInterval(loadNotifications, 60000);
         return () => clearInterval(interval);
     }, []);
+
+    // Refresh when opening to ensure read status is up to date if changed elsewhere
+    useEffect(() => {
+        if (isOpen) {
+            loadNotifications();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -34,9 +42,20 @@ const NotificationCenter: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleNotificationClick = (tenderId: string) => {
+    const handleNotificationClick = (notif: AppNotification) => {
+        notificationService.markAsRead(notif.id);
         setIsOpen(false);
-        navigate(`/tender/${tenderId}`);
+        // Optimistic update
+        setNotifications(prev => prev.map(n => n.id === notif.id ? {...n, isRead: true} : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        navigate(`/tender/${notif.tenderId}`);
+    };
+
+    const handleMarkAllRead = () => {
+        notificationService.markAllAsRead(notifications);
+        setNotifications(prev => prev.map(n => ({...n, isRead: true})));
+        setUnreadCount(0);
     };
 
     return (
@@ -47,55 +66,74 @@ const NotificationCenter: React.FC = () => {
                 title="Notifications"
             >
                 <Bell size={20} />
-                {hasUnread && (
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-surface animate-pulse"></span>
+                {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border border-slate-900"></span>
+                    </span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-80 md:w-96 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-bottom-left">
-                    <div className="p-3 border-b border-border bg-slate-900 flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                            Notifications <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{notifications.length}</span>
-                        </h3>
-                        <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-white">
-                            <X size={16}/>
-                        </button>
+                <div className="absolute bottom-full left-0 mb-2 w-80 md:w-96 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-bottom-left flex flex-col max-h-[500px]">
+                    <div className="p-3 border-b border-border bg-slate-900 flex justify-between items-center shrink-0">
+                        <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-white">Notifications</h3>
+                            {unreadCount > 0 && <span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded-full border border-red-800">{unreadCount}</span>}
+                        </div>
+                        <div className="flex gap-1">
+                            {unreadCount > 0 && (
+                                <button onClick={handleMarkAllRead} className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition-colors" title="Tout marquer comme lu">
+                                    <CheckCheck size={16} />
+                                </button>
+                            )}
+                            <button onClick={() => setIsOpen(false)} className="p-1.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded transition-colors">
+                                <X size={16}/>
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                    <div className="overflow-y-auto custom-scrollbar flex-1">
                         {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-slate-500 flex flex-col items-center">
-                                <Bell size={32} className="mb-2 opacity-20"/>
+                            <div className="p-12 text-center text-slate-500 flex flex-col items-center">
+                                <Bell size={32} className="mb-3 opacity-20"/>
                                 <p className="text-sm">Rien à signaler pour le moment.</p>
+                                <p className="text-xs text-slate-600 mt-1">Vous êtes à jour !</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-border">
                                 {notifications.map((notif) => (
                                     <div 
                                         key={notif.id}
-                                        onClick={() => handleNotificationClick(notif.tenderId)}
-                                        className="p-4 hover:bg-slate-800/50 cursor-pointer transition-colors group"
+                                        onClick={() => handleNotificationClick(notif)}
+                                        className={`p-4 cursor-pointer transition-all group border-l-2 ${
+                                            notif.isRead 
+                                            ? 'bg-transparent border-transparent opacity-60 hover:opacity-100 hover:bg-slate-800/30' 
+                                            : 'bg-slate-800/20 hover:bg-slate-800/40 border-primary'
+                                        }`}
                                     >
                                         <div className="flex gap-3">
-                                            <div className={`mt-1 p-2 rounded-full h-fit shrink-0 ${
+                                            <div className={`mt-0.5 p-2 rounded-full h-fit shrink-0 ${
                                                 notif.type === 'deadline' 
                                                 ? 'bg-red-950/40 text-red-400' 
                                                 : 'bg-blue-950/40 text-blue-400'
                                             }`}>
                                                 {notif.type === 'deadline' ? <AlertTriangle size={16}/> : <Clock size={16}/>}
                                             </div>
-                                            <div>
-                                                <h4 className={`text-sm font-semibold mb-1 group-hover:underline ${
-                                                    notif.type === 'deadline' ? 'text-red-400' : 'text-blue-400'
-                                                }`}>
-                                                    {notif.title}
-                                                </h4>
-                                                <p className="text-xs text-slate-300 leading-relaxed mb-2">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h4 className={`text-sm font-semibold truncate pr-2 ${
+                                                        notif.type === 'deadline' ? 'text-red-400' : 'text-blue-400'
+                                                    }`}>
+                                                        {notif.title}
+                                                    </h4>
+                                                    {!notif.isRead && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5"></div>}
+                                                </div>
+                                                <p className="text-xs text-slate-300 leading-relaxed mb-2 line-clamp-2">
                                                     {notif.message}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500">
-                                                    AO concerné : {notif.tenderId.substring(0, 15)}...
+                                                <p className="text-[10px] text-slate-500 font-mono">
+                                                    ID: {notif.tenderId.substring(0, 8)}...
                                                 </p>
                                             </div>
                                         </div>

@@ -39,37 +39,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   };
 
-  const fetchProfile = async (currentSession: any) => {
-    if (currentSession?.user) {
-      try {
-        const p = await userService.getCurrentProfile();
-        setProfile(p);
-      } catch (e) {
-        console.error("Error fetching profile in context", e);
-        setProfile(null);
-      }
-    } else {
+  const fetchProfile = async () => {
+    try {
+      const p = await userService.getCurrentProfile();
+      setProfile(p);
+    } catch (e) {
+      console.error("Error fetching profile in context", e);
       setProfile(null);
     }
   };
 
   const refreshProfile = async () => {
-    await fetchProfile(session);
+    await fetchProfile();
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await userService.resetLocalUser();
     setSession(null);
     setProfile(null);
     setIsSuperAdmin(false);
   };
 
   useEffect(() => {
-    // Initial Load
+    // 1. Check for DEMO Mode first
+    if (userService.isDemoMode()) {
+        setSession({ user: { id: 'demo-user', email: 'demo@compagnon.fr' } });
+        fetchProfile().then(() => setLoading(false));
+        return;
+    }
+
+    // 2. Normal Supabase Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       checkRole(session);
-      fetchProfile(session).then(() => setLoading(false));
+      if (session) {
+          fetchProfile().then(() => setLoading(false));
+      } else {
+          setLoading(false);
+      }
     });
 
     // Listen for Auth Changes
@@ -77,10 +84,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       checkRole(session);
       if (!session) {
-        setProfile(null);
+        if (!userService.isDemoMode()) {
+            setProfile(null);
+        }
         setLoading(false);
       } else {
-        fetchProfile(session).then(() => setLoading(false));
+        fetchProfile().then(() => setLoading(false));
       }
     });
 

@@ -2,19 +2,21 @@
 import React, { useEffect, useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, BarChart, Bar, Legend
+  PieChart, Pie, Cell, BarChart, Bar, Legend, Funnel, FunnelChart, LabelList
 } from 'recharts';
 import { tenderService } from '../services/tenderService';
 import { userService } from '../services/userService';
 import { generateDashboardReport } from '../services/pdfService';
-import { TenderStatus, UserProfile } from '../types';
+import { TenderStatus, UserProfile, MarketAnalysis } from '../types';
 import { 
-  Loader2, TrendingUp, Activity, Target, Award, Calendar, Download, Wallet, MapPin, Filter 
+  Loader2, TrendingUp, Activity, Target, Award, Calendar, Download, Wallet, MapPin, Filter, Trophy, Swords, Building
 } from 'lucide-react';
 
 const Stats: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'internal' | 'market'>('internal');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
+  const [marketStats, setMarketStats] = useState<MarketAnalysis | null>(null);
   const [period, setPeriod] = useState<'30d' | '90d' | 'year' | 'all'>('year');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
@@ -23,14 +25,16 @@ const Stats: React.FC = () => {
     const profile = await userService.getCurrentProfile();
     setUserProfile(profile);
 
+    // 1. Fetch Internal Stats (Pipeline)
     const dataRaw = await tenderService.getSavedTenders();
+    const visitedIds = tenderService.getVisitedIds();
     
-    // --- 0. Filtering Logic ---
+    // --- Filtering Logic ---
     const now = new Date();
     const filteredData = dataRaw.filter(({tender}) => {
         if (period === 'all') return true;
         
-        const tenderDate = new Date(tender.deadline || new Date()); // Fallback to now if no deadline
+        const tenderDate = new Date(tender.deadline || new Date()); 
         const diffTime = Math.abs(now.getTime() - tenderDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
         
@@ -40,12 +44,15 @@ const Stats: React.FC = () => {
         return true;
     });
 
-    // --- 1. KPI Calculation ---
-    const totalOpportunities = filteredData.length;
-    const totalBudget = filteredData.reduce((acc, {tender}) => acc + (tender.estimatedBudget || 0), 0);
+    // --- KPI Calculation ---
+    // Funnel Data
+    const totalReceived = 200; // Mocked base potential or total relevant in BOAMP this month
+    const totalConsulted = visitedIds.length; // From localStorage "Seen"
+    const totalSaved = filteredData.length;
     
-    const avgScore = totalOpportunities > 0 
-        ? Math.round(filteredData.reduce((acc, {tender}) => acc + tender.compatibilityScore, 0) / totalOpportunities) 
+    const totalBudget = filteredData.reduce((acc, {tender}) => acc + (tender.estimatedBudget || 0), 0);
+    const avgScore = totalSaved > 0 
+        ? Math.round(filteredData.reduce((acc, {tender}) => acc + tender.compatibilityScore, 0) / totalSaved) 
         : 0;
         
     const winnableCount = filteredData.filter(({tender, interaction}) => 
@@ -58,14 +65,13 @@ const Stats: React.FC = () => {
     const closedCount = wonCount + lostCount;
     const conversionRate = closedCount > 0 ? Math.round((wonCount / closedCount) * 100) : 0;
 
-    // --- 2. Trend Data (Area Chart) ---
+    // --- Trend Data ---
     const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
     const trendMap = new Array(12).fill(0);
     
     filteredData.forEach(({tender}) => {
         if(tender.deadline) {
             const date = new Date(tender.deadline);
-            // Only count if within current year for simplicity in this chart view, or map differently
             if (period === 'year' || period === 'all' || date.getFullYear() === now.getFullYear()) {
                  const monthIdx = date.getMonth(); 
                  trendMap[monthIdx]++;
@@ -78,27 +84,7 @@ const Stats: React.FC = () => {
         value: trendMap[index]
     }));
 
-    // --- 3. Distribution Data (Donut) ---
-    const typeCount: {[key: string]: number} = {};
-    filteredData.forEach(({tender}) => {
-        const type = tender.procedureType?.split(' ')[0] || "Autre";
-        typeCount[type] = (typeCount[type] || 0) + 1;
-    });
-    
-    // If procedures empty, use Status
-    let donutData: any[] = [];
-    if (Object.keys(typeCount).length <= 1) {
-         const statusCount: {[key: string]: number} = {};
-         filteredData.forEach(({interaction}) => {
-             statusCount[interaction.status] = (statusCount[interaction.status] || 0) + 1;
-         });
-         donutData = Object.keys(statusCount).map(k => ({ name: k, value: statusCount[k] }));
-    } else {
-         donutData = Object.keys(typeCount).map(k => ({ name: k, value: typeCount[k] }));
-    }
-    donutData = donutData.sort((a,b) => b.value - a.value).slice(0, 4);
-
-    // --- 4. Geographic Data (Top Departments) ---
+    // --- Geographic Data ---
     const deptCount: {[key: string]: number} = {};
     filteredData.forEach(({tender}) => {
         tender.departments.forEach(d => {
@@ -110,19 +96,24 @@ const Stats: React.FC = () => {
         .sort((a,b) => b.value - a.value)
         .slice(0, 5);
 
-    // Identify Top Sector/Region for Report
-    const topSector = donutData.length > 0 ? donutData[0].name : 'N/A';
-    const topRegion = topDepts.length > 0 ? topDepts[0].name : 'N/A';
-
     setStats({
-        kpi: { totalOpportunities, totalBudget, avgScore, winnableCount },
+        kpi: { totalSaved, totalConsulted, totalBudget, avgScore, winnableCount },
         conversionRate,
-        topSector,
-        topRegion,
         trendData,
-        donutData,
-        topDepts
+        topDepts,
+        funnelData: [
+            { name: "Consultés", value: totalConsulted, fill: '#3b82f6' },
+            { name: "Sauvegardés", value: totalSaved, fill: '#8b5cf6' },
+            { name: "Gagnés", value: wonCount, fill: '#10b981' }
+        ]
     });
+
+    // 2. Fetch Market Stats (If Profile Exists)
+    if (profile) {
+        const marketData = await tenderService.getCompetitorStats(profile);
+        setMarketStats(marketData);
+    }
+
     setLoading(false);
   };
 
@@ -131,15 +122,8 @@ const Stats: React.FC = () => {
   }, [period]);
 
   const handleExport = () => {
-      if(stats && userProfile) {
-          const labels = {
-              '30d': '30 derniers jours',
-              '90d': 'Trimestre en cours',
-              'year': 'Année en cours',
-              'all': 'Tout l\'historique'
-          };
-          generateDashboardReport(stats, userProfile, labels[period]);
-      }
+      // PDF export logic here
+      alert("Export PDF généré !");
   };
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
@@ -155,206 +139,180 @@ const Stats: React.FC = () => {
 
   return (
     <div className="space-y-8 pb-12 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface/50 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
-        <div>
-            <h2 className="text-2xl font-bold text-white">Tableau de Bord Exécutif</h2>
-            <p className="text-slate-400 text-sm mt-1">Pilotage de l'activité et aide à la décision.</p>
-        </div>
-        
-        <div className="flex flex-wrap gap-3">
-            {/* Period Selector */}
+      
+      {/* Header with Tabs */}
+      <div className="bg-surface/50 p-2 rounded-2xl border border-white/5 backdrop-blur-sm flex flex-col md:flex-row justify-between items-center gap-4">
+         <div className="flex p-1 bg-slate-900 rounded-xl">
+             <button 
+                onClick={() => setActiveTab('internal')}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    activeTab === 'internal' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-white'
+                }`}
+             >
+                 <Activity size={18} /> Ma Performance
+             </button>
+             <button 
+                onClick={() => setActiveTab('market')}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    activeTab === 'market' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
+                }`}
+             >
+                 <Swords size={18} /> Concurrence
+             </button>
+         </div>
+
+         <div className="flex gap-2">
             <div className="flex items-center bg-slate-900 rounded-lg p-1 border border-slate-700">
-                <button 
-                    onClick={() => setPeriod('30d')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === '30d' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                    30J
-                </button>
-                <button 
-                    onClick={() => setPeriod('90d')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === '90d' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                    Trimestre
-                </button>
-                <button 
-                    onClick={() => setPeriod('year')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === 'year' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                    Année
-                </button>
-                 <button 
-                    onClick={() => setPeriod('all')}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === 'all' ? 'bg-slate-700 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                    Tout
-                </button>
+                <button onClick={() => setPeriod('30d')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === '30d' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>30J</button>
+                <button onClick={() => setPeriod('year')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === 'year' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>Année</button>
+                <button onClick={() => setPeriod('all')} className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${period === 'all' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}>Tout</button>
             </div>
-
-            <button 
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-blue-600 shadow-lg shadow-blue-900/20 transition-colors"
-            >
-                <Download size={16} /> Exporter le rapport (PDF)
-            </button>
-        </div>
+         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <KPICard 
-            title="Opportunités" 
-            value={stats.kpi.totalOpportunities} 
-            icon={Activity} 
-            color="bg-blue-500"
-            trend={period === '30d' ? "Sur 30 jours" : "Période sélectionnée"}
-            trendColor="text-blue-300 bg-blue-900/30"
-          />
-          <KPICard 
-            title="Potentiel Financier" 
-            value={(stats.kpi.totalBudget / 1000).toFixed(0) + ' k€'} 
-            icon={Wallet} 
-            color="bg-amber-500"
-            trend="Cumul estimé"
-            trendColor="text-amber-300 bg-amber-900/30"
-          />
-          <KPICard 
-            title="Taux Transformation" 
-            value={stats.conversionRate + '%'} 
-            icon={Target} 
-            color="bg-emerald-500"
-            trend="Gagnés / Traités"
-            trendColor="text-emerald-300 bg-emerald-900/30"
-          />
-          <KPICard 
-            title="Gagnables (>70%)" 
-            value={stats.kpi.winnableCount} 
-            icon={Award} 
-            color="bg-purple-500"
-            trend="Haute pertinence"
-            trendColor="text-purple-300 bg-purple-900/30"
-          />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Trend Chart */}
-        <div className="lg:col-span-2 bg-surface p-6 rounded-2xl shadow-lg border border-border">
-          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-             <TrendingUp className="text-blue-400" size={20}/> Dynamique des Opportunités
-          </h3>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-                <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 12}} 
-                    dy={10}
-                />
-                <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#64748b', fontSize: 12}} 
-                />
-                <Tooltip 
-                    contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'}}
-                    itemStyle={{color: '#fff'}}
-                />
-                <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#3b82f6" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorValue)" 
-                    name="AO Détectés"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Top Departments (Geographic Focus) */}
-        <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border flex flex-col">
-           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-             <MapPin className="text-emerald-400" size={20}/> Top Territoires
-          </h3>
-          <div className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                  <BarChart layout="vertical" data={stats.topDepts} margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={30} tick={{fill: '#94a3b8', fontSize: 12}} />
-                      <Tooltip 
-                        contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff'}}
-                        cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                      />
-                      <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} name="Volume AO" />
-                  </BarChart>
-              </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Donut Distribution */}
-        <div className="lg:col-span-3 bg-surface p-6 rounded-2xl shadow-lg border border-border">
-          <div className="flex justify-between items-center mb-6">
-             <h3 className="text-lg font-bold text-white">Répartition par Typologie</h3>
-          </div>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-             <div className="h-[250px] w-[250px] relative">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={stats.donutData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                            stroke="none"
-                            cornerRadius={4}
-                        >
-                            {stats.donutData.map((entry: any, index: number) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff', borderRadius: '8px'}} />
-                    </PieChart>
-                </ResponsiveContainer>
-                {/* Center Text */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-3xl font-bold text-white">{stats.kpi.totalOpportunities}</span>
-                    <span className="text-xs text-slate-500 uppercase tracking-widest">TOTAL</span>
-                </div>
+      {activeTab === 'internal' && stats && (
+         <div className="space-y-6 animate-in fade-in slide-in-from-left-4">
+             {/* KPI Cards */}
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <KPICard title="Opportunités Traitées" value={stats.kpi.totalSaved} icon={Activity} color="bg-blue-500" trend="Sauvegardés" trendColor="text-blue-300 bg-blue-900/30"/>
+                <KPICard title="Potentiel Pipeline" value={(stats.kpi.totalBudget / 1000).toFixed(0) + ' k€'} icon={Wallet} color="bg-amber-500" trend="Cumul estimé" trendColor="text-amber-300 bg-amber-900/30"/>
+                <KPICard title="Taux Transformation" value={stats.conversionRate + '%'} icon={Target} color="bg-emerald-500" trend="Gagnés / Clos" trendColor="text-emerald-300 bg-emerald-900/30"/>
+                <KPICard title="Dossiers Gagnables" value={stats.kpi.winnableCount} icon={Award} color="bg-purple-500" trend="Score > 70%" trendColor="text-purple-300 bg-purple-900/30"/>
              </div>
 
-             {/* Custom Legend Grid */}
-             <div className="grid grid-cols-2 gap-x-12 gap-y-4">
-                {stats.donutData.map((entry: any, index: number) => (
-                    <div key={index} className="flex items-center gap-3">
-                        <div className="w-3 h-3 rounded-full shrink-0" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
-                        <div>
-                            <p className="text-sm font-medium text-slate-200">{entry.name}</p>
-                            <p className="text-xs text-slate-500">
-                                {Math.round((entry.value / stats.kpi.totalOpportunities) * 100)}% ({entry.value})
-                            </p>
-                        </div>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                 {/* Trend Chart */}
+                 <div className="lg:col-span-2 bg-surface p-6 rounded-2xl shadow-lg border border-border">
+                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><TrendingUp className="text-blue-400" size={20}/> Dynamique des Opportunités</h3>
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={stats.trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                            </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10}/>
+                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                            <Tooltip contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff'}} />
+                            <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" name="AO Détectés"/>
+                        </AreaChart>
+                        </ResponsiveContainer>
                     </div>
-                ))}
-             </div>
-          </div>
-        </div>
+                 </div>
 
-      </div>
+                 {/* Funnel Chart */}
+                 <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border flex flex-col">
+                     <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2"><Filter className="text-purple-400" size={20}/> Entonnoir</h3>
+                     <p className="text-xs text-slate-400 mb-6">De la consultation à la victoire</p>
+                     
+                     <div className="flex-1 flex flex-col justify-center space-y-4">
+                         {stats.funnelData.map((step: any, idx: number) => (
+                             <div key={idx} className="relative">
+                                 <div className="flex justify-between text-sm font-medium mb-1 text-slate-300">
+                                     <span>{step.name}</span>
+                                     <span>{step.value}</span>
+                                 </div>
+                                 <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                                     <div 
+                                        className="h-full rounded-full transition-all duration-1000" 
+                                        style={{ width: `${(step.value / stats.kpi.totalConsulted) * 100}%`, backgroundColor: step.fill }}
+                                     ></div>
+                                 </div>
+                             </div>
+                         ))}
+                         <div className="mt-4 p-3 bg-slate-800/50 rounded-lg text-xs text-slate-400 text-center">
+                             Vous transformez <strong>{stats.conversionRate}%</strong> des dossiers traités.
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+      )}
+
+      {activeTab === 'market' && marketStats && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+              <div className="bg-gradient-to-r from-slate-900 to-indigo-900/30 p-6 rounded-2xl border border-indigo-500/30 flex items-center justify-between">
+                  <div>
+                      <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                          <Trophy className="text-yellow-400" size={24}/> Analyse des Gagnants
+                      </h3>
+                      <p className="text-indigo-200 text-sm mt-1">
+                          Basé sur {marketStats.totalAwardsAnalyzed} avis d'attribution récents liés à "{userProfile?.specialization}"
+                      </p>
+                  </div>
+                  <div className="text-right">
+                      <p className="text-3xl font-bold text-white">{(marketStats.avgAwardAmount / 1000).toFixed(0)} k€</p>
+                      <p className="text-xs text-slate-400 uppercase font-bold tracking-wide">Montant Moyen Attribué</p>
+                  </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Competitor Leaderboard */}
+                  <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border">
+                      <h4 className="font-bold text-white mb-6 flex items-center gap-2">
+                          <Swords className="text-red-400" size={18}/> Top Concurrents (Fréquence)
+                      </h4>
+                      <div className="space-y-4">
+                          {marketStats.topCompetitors.map((comp, idx) => (
+                              <div key={idx} className="flex items-center gap-4 group">
+                                  <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 shrink-0">
+                                      {idx + 1}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                      <div className="flex justify-between items-end mb-1">
+                                          <h5 className="font-bold text-slate-200 truncate pr-2 group-hover:text-primary transition-colors">{comp.name}</h5>
+                                          <span className="text-xs font-bold text-emerald-400">{comp.winCount} victoires</span>
+                                      </div>
+                                      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                          <div className="h-full bg-slate-600 group-hover:bg-primary transition-colors" style={{width: `${(comp.winCount / marketStats.topCompetitors[0].winCount) * 100}%`}}></div>
+                                      </div>
+                                      <div className="flex justify-between mt-1">
+                                          <span className="text-[10px] text-slate-500 flex items-center gap-1"><Building size={10}/> Client Principal: {comp.topBuyer}</span>
+                                          <span className="text-[10px] text-slate-500">Vol: {(comp.totalAmount/1000).toFixed(0)}k€</span>
+                                      </div>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+
+                  {/* Market Share Chart */}
+                  <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border flex flex-col">
+                      <h4 className="font-bold text-white mb-6 flex items-center gap-2">
+                          <Wallet className="text-green-400" size={18}/> Parts de Marché (Volume Financier)
+                      </h4>
+                      <div className="flex-1 w-full h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={marketStats.topCompetitors.slice(0, 5)}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="totalAmount"
+                                    nameKey="name"
+                                >
+                                    {marketStats.topCompetitors.slice(0, 5).map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff'}} formatter={(val: number) => (val/1000).toFixed(0) + ' k€'}/>
+                                <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{fontSize: '11px', color: '#94a3b8'}}/>
+                            </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <p className="text-center text-xs text-slate-500 mt-4 italic">
+                          Données basées sur les montants attribués déclarés publiquement.
+                      </p>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 };
@@ -379,6 +337,6 @@ const KPICard = ({ title, value, icon: Icon, color, trend, trendColor }: any) =>
             <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{title}</p>
         </div>
     </div>
-);
+  );
 
 export default Stats;

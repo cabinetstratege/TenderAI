@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { userService } from '../services/userService';
 import { suggestCPVCodes } from '../services/geminiService';
-import { Save, Building2, Wrench, MapPin, CheckCircle, Sparkles, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Building2, Wrench, MapPin, Sparkles, Loader2, Link as LinkIcon, Cloud, CloudOff, Check, RefreshCw, Mail } from 'lucide-react';
 import { UserProfile } from '../types';
 import MultiSelect from '../components/MultiSelect';
 
@@ -22,11 +22,19 @@ const DEPARTMENTS = [
 const SECTORS = ["BTP", "Informatique / IT", "Services", "Nettoyage", "Sécurité", "Formation", "Transport", "Fournitures de bureau", "Médical", "Conseil"];
 const COMPANY_SIZES = ["Micro-entreprise", "TPE (< 10 salariés)", "PME (< 250 salariés)", "ETI", "Grande Entreprise"];
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 const Profile: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isSuggestingCPV, setIsSuggestingCPV] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Autosave states
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isFirstLoad = useRef(true);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -38,17 +46,41 @@ const Profile: React.FC = () => {
     loadProfile();
   }, []);
 
+  // Autosave Effect
+  useEffect(() => {
+      // Don't save on initial load or if profile is null
+      if (!profile || isFirstLoad.current) {
+          isFirstLoad.current = false;
+          return;
+      }
+
+      setSaveStatus('saving');
+
+      // Clear existing timer if user is still typing
+      if (timerRef.current) {
+          clearTimeout(timerRef.current);
+      }
+
+      // Set new timer
+      timerRef.current = setTimeout(async () => {
+          try {
+              await userService.saveProfile(profile);
+              setSaveStatus('saved');
+              setLastSaved(new Date());
+          } catch (error) {
+              console.error("Autosave failed", error);
+              setSaveStatus('error');
+          }
+      }, 1500); // Wait 1.5s after last change
+
+      return () => {
+          if (timerRef.current) clearTimeout(timerRef.current);
+      };
+  }, [profile]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     if (profile) {
       setProfile({ ...profile, [e.target.name]: e.target.value });
-    }
-  };
-
-  const handleSave = async () => {
-    if (profile) {
-      await userService.saveProfile(profile);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
@@ -68,21 +100,45 @@ const Profile: React.FC = () => {
   if (loading || !profile) return <div className="p-8 text-center"><Loader2 className="animate-spin mx-auto text-primary" /></div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
-      <div className="flex justify-between items-center">
+    <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-md z-30 py-4 border-b border-transparent">
         <div>
-            <h2 className="text-2xl font-bold text-white">Profil Entreprise</h2>
-            <p className="text-slate-400">
+            <h2 className="text-2xl font-bold text-textMain">Profil Entreprise</h2>
+            <p className="text-textMuted">
                 Ces informations servent à calibrer l'IA, filtrer les AO et préparer vos dossiers de candidature.
             </p>
         </div>
-        <button 
-            onClick={handleSave}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold shadow-lg transition-all duration-300 ${showSuccess ? 'bg-green-600 text-white shadow-green-900/40' : 'bg-primary text-white hover:bg-blue-600 shadow-blue-900/40'}`}
-        >
-            {showSuccess ? <CheckCircle size={20} /> : <Save size={20} />}
-            {showSuccess ? 'Enregistré !' : 'Enregistrer'}
-        </button>
+        
+        {/* Autosave Indicator */}
+        <div className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm transition-all">
+            {saveStatus === 'saving' && (
+                <>
+                    <RefreshCw size={16} className="text-amber-500 animate-spin" />
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">Enregistrement...</span>
+                </>
+            )}
+            {saveStatus === 'saved' && (
+                <>
+                    <Cloud size={16} className="text-emerald-500" />
+                    <div className="flex flex-col items-start leading-none">
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Synchronisé</span>
+                        {lastSaved && <span className="text-[10px] text-slate-400">{lastSaved.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+                    </div>
+                </>
+            )}
+            {saveStatus === 'error' && (
+                <>
+                    <CloudOff size={16} className="text-red-500" />
+                    <span className="text-xs font-bold text-red-600 dark:text-red-400">Erreur sauvegarde</span>
+                </>
+            )}
+            {saveStatus === 'idle' && !lastSaved && (
+                <>
+                    <Check size={16} className="text-slate-400" />
+                    <span className="text-xs font-medium text-slate-500">Prêt</span>
+                </>
+            )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -91,43 +147,59 @@ const Profile: React.FC = () => {
         <div className="lg:col-span-5 space-y-6">
             <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
                  <div className="flex items-center gap-3 pb-4 border-b border-border">
-                    <div className="p-2 bg-blue-900/30 text-blue-400 rounded-lg">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                         <Building2 size={24} />
                     </div>
-                    <h3 className="font-bold text-lg text-white">Identité Administrative</h3>
+                    <h3 className="font-bold text-lg text-textMain">Identité Administrative</h3>
                  </div>
 
                  <div className="space-y-4">
                     <div>
-                        <label className="text-sm font-semibold text-slate-300 mb-1 block">Nom de l'entreprise</label>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Nom de l'entreprise</label>
                         <input 
                             type="text" 
                             name="companyName" 
                             value={profile.companyName} 
                             onChange={handleChange}
-                            className="w-full px-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-white"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white transition-colors"
                         />
+                    </div>
+
+                    <div>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Email de contact (pour envois AO)</label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                            <input 
+                                type="email" 
+                                name="contactEmail" 
+                                placeholder="votre.email@entreprise.com"
+                                value={profile.contactEmail || ''} 
+                                onChange={handleChange}
+                                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white transition-colors"
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Sert de destinataire par défaut pour vous envoyer les fiches AO.</p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="text-sm font-semibold text-slate-300 mb-1 block">N° SIRET</label>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">N° SIRET</label>
                             <input 
                                 type="text" 
                                 name="siret" 
                                 placeholder="14 chiffres"
                                 value={profile.siret || ''} 
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-sm text-white"
+                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-sm text-slate-900 dark:text-white transition-colors"
                             />
                         </div>
                         <div>
-                            <label className="text-sm font-semibold text-slate-300 mb-1 block">Taille</label>
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Taille</label>
                             <select 
                                 name="companySize"
                                 value={profile.companySize || ''}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-white"
+                                className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white transition-colors"
                             >
                                 <option value="">Selectionner...</option>
                                 {COMPANY_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -136,19 +208,19 @@ const Profile: React.FC = () => {
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold text-slate-300 mb-1 block">Adresse du Siège</label>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Adresse du Siège</label>
                         <textarea 
                             name="address" 
                             rows={2}
                             value={profile.address || ''} 
                             onChange={handleChange}
                             placeholder="10 rue de la République..."
-                            className="w-full px-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none text-white"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-none text-slate-900 dark:text-white transition-colors"
                         />
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold text-slate-300 mb-1 block">Site Web</label>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Site Web</label>
                         <div className="relative">
                             <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                             <input 
@@ -157,7 +229,7 @@ const Profile: React.FC = () => {
                                 placeholder="https://www.mon-entreprise.com"
                                 value={profile.website || ''} 
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-blue-400"
+                                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none text-blue-600 dark:text-blue-400 transition-colors"
                             />
                         </div>
                     </div>
@@ -171,22 +243,22 @@ const Profile: React.FC = () => {
             {/* Technical Expertise */}
             <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
                  <div className="flex items-center gap-3 pb-4 border-b border-border">
-                    <div className="p-2 bg-purple-900/30 text-purple-400 rounded-lg">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
                         <Wrench size={24} />
                     </div>
-                    <h3 className="font-bold text-lg text-white">Expertise Technique</h3>
+                    <h3 className="font-bold text-lg text-textMain">Expertise Technique</h3>
                  </div>
 
                  <div className="space-y-5">
                      <div>
-                        <label className="text-sm font-semibold text-slate-300 mb-1 block">Spécialisation (Description IA)</label>
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Spécialisation (Description IA)</label>
                         <textarea 
                             name="specialization"
                             value={profile.specialization}
                             onChange={handleChange}
                             rows={2}
                             placeholder="Décrivez votre activité pour aider l'IA..."
-                            className="w-full px-4 py-2 bg-background border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-white"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-slate-900 dark:text-white transition-colors"
                         />
                     </div>
 
@@ -209,8 +281,8 @@ const Profile: React.FC = () => {
 
                     <div>
                         <div className="flex justify-between items-center mb-1">
-                            <label className="text-sm font-semibold text-slate-300">Codes CPV</label>
-                            <button onClick={handleSuggestCPV} disabled={isSuggestingCPV} className="text-xs flex items-center gap-1 text-purple-400 hover:text-purple-300 font-medium">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Codes CPV</label>
+                            <button onClick={handleSuggestCPV} disabled={isSuggestingCPV} className="text-xs flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:text-purple-500 font-medium">
                                 {isSuggestingCPV ? <Loader2 size={12} className="animate-spin"/> : <Sparkles size={12}/>} Suggestion Auto
                             </button>
                         </div>
@@ -219,7 +291,7 @@ const Profile: React.FC = () => {
                             name="cpvCodes" 
                             value={profile.cpvCodes} 
                             onChange={handleChange}
-                            className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-sm text-slate-300"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary outline-none font-mono text-sm text-slate-900 dark:text-slate-300 transition-colors"
                         />
                         <p className="text-xs text-slate-500 mt-1">Séparés par des virgules</p>
                     </div>
@@ -236,17 +308,17 @@ const Profile: React.FC = () => {
             {/* Geography */}
             <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
                  <div className="flex items-center gap-3 pb-4 border-b border-border">
-                    <div className="p-2 bg-emerald-900/30 text-emerald-400 rounded-lg">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
                         <MapPin size={24} />
                     </div>
-                    <h3 className="font-bold text-lg text-white">Zone d'Intervention</h3>
+                    <h3 className="font-bold text-lg text-textMain">Zone d'Intervention</h3>
                  </div>
 
                  <div className="space-y-4">
-                    <div className="flex items-center gap-4 p-3 bg-slate-900 rounded-lg border border-slate-700">
+                    <div className="flex items-center gap-4 p-3 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
                         <span className="text-2xl">🇫🇷</span>
                         <div>
-                            <p className="font-bold text-white">France Entière</p>
+                            <p className="font-bold text-slate-900 dark:text-white">France Entière</p>
                             <p className="text-xs text-slate-500">Scope de base</p>
                         </div>
                     </div>

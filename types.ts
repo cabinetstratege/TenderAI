@@ -25,6 +25,7 @@ export interface UserProfile {
   id: string;
   // Identity
   companyName: string;
+  contactEmail?: string; // New field for quick sharing
   siret?: string;
   address?: string;
   website?: string;
@@ -41,7 +42,9 @@ export interface UserProfile {
   scope: string; // Changed from 'France' to allow comparisons with 'Custom', 'Europe'
   targetDepartments: string; // Comma separated (Tags)
   
-  subscriptionStatus: 'Active' | 'Suspended';
+  subscriptionStatus: 'Active' | 'Suspended' | 'Trial' | 'Expired' | 'Demo';
+  trialStartedAt?: string; // ISO Date string for 24h trial start
+  
   // Saved View State (Frontend Layer)
   savedDashboardFilters?: DashboardFilters;
 }
@@ -59,6 +62,13 @@ export interface TenderContact {
     phone?: string;
     address?: string;
     urlBuyerProfile?: string;
+}
+
+export interface TenderLot {
+    lotNumber: string;
+    title: string;
+    description?: string;
+    cpv?: string[];
 }
 
 export interface Tender {
@@ -79,6 +89,9 @@ export interface Tender {
   
   // Contact Info
   contact?: TenderContact;
+  
+  // Lots
+  lots: TenderLot[];
 
   // AI Extracted/Calculated
   aiSummary: string;
@@ -115,4 +128,17 @@ export interface AppNotification {
 export interface ChartData {
   name: string;
   value: number;
+}
+
+export interface CompetitorStat {
+    name: string;
+    winCount: number;
+    totalAmount: number;
+    topBuyer: string; // Le client chez qui ils gagnent le plus
+}
+
+export interface MarketAnalysis {
+    topCompetitors: CompetitorStat[];
+    avgAwardAmount: number;
+    totalAwardsAnalyzed: number;
 }

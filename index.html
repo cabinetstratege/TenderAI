@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr" class="dark">
   <head>
@@ -5,7 +6,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Le Compagnon des Marchés</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet">
+    
+    <style>
+      /* THEME VARIABLES DEFINITION */
+      :root {
+        /* LIGHT MODE (Default) */
+        --color-primary: #2563eb;       /* blue-600 */
+        --color-secondary: #64748b;     /* slate-500 */
+        --color-accent: #0284c7;        /* sky-600 */
+        
+        --color-background: #f8fafc;    /* slate-50 */
+        --color-surface: #ffffff;       /* white */
+        --color-surface-highlight: #f1f5f9; /* slate-100 */
+        
+        --color-border: #cbd5e1;        /* slate-300 */
+        
+        --color-text-main: #0f172a;     /* slate-900 */
+        --color-text-muted: #64748b;    /* slate-500 */
+      }
+
+      .dark {
+        /* DARK MODE OVERRIDES - Richer, deeper blues instead of pure black */
+        --color-primary: #60a5fa;       /* blue-400 (lighter for dark mode contrast) */
+        --color-secondary: #94a3b8;     /* slate-400 */
+        --color-accent: #38bdf8;        /* sky-400 */
+        
+        --color-background: #020617;    /* slate-950 */
+        --color-surface: #0f172a;       /* slate-900 */
+        --color-surface-highlight: #1e293b; /* slate-800 */
+        
+        --color-border: #1e293b;        /* slate-800 */
+        
+        --color-text-main: #f1f5f9;     /* slate-100 */
+        --color-text-muted: #94a3b8;    /* slate-400 */
+      }
+
+      /* NOISE TEXTURE OVERLAY */
+      .bg-noise {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Dark Scrollbar - Thinner & Cleaner */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.3); 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.5); 
+      }
+
+      /* Glassmorphism Utilities */
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .dark .glass {
+         background: rgba(15, 23, 42, 0.6);
+         border-right: 1px solid rgba(255, 255, 255, 0.08); /* Subtle rim light */
+         box-shadow: 4px 0 24px rgba(0,0,0,0.2);
+      }
+      
+      .glass-panel {
+        background: var(--color-surface);
+        /* In dark mode, slightly transparent to show blobs behind */
+        @apply dark:bg-slate-900/80 dark:backdrop-blur-md;
+      }
+    </style>
+
     <script>
       // Polyfill for libraries expecting Node.js global 'process'
       window.process = {
@@ -16,30 +102,24 @@
       };
       
       tailwind.config = {
-        darkMode: 'class', // Force dark mode via HTML class
+        darkMode: 'class', 
         theme: {
           extend: {
             colors: {
-              // Dark Mode Palette
-              primary: '#3b82f6', // blue-500 (Better contrast on dark)
-              secondary: '#64748b', // slate-500
-              accent: '#0ea5e9', // sky-500
-              
-              // Backgrounds
-              background: '#020617', // slate-950 (Main Deep Dark)
-              surface: '#0f172a', // slate-900 (Cards)
-              surfaceHighlight: '#1e293b', // slate-800 (Hovers)
-              
-              // Borders
-              border: '#1e293b', // slate-800
-              
-              // Text
-              textMain: '#f8fafc', // slate-50
-              textMuted: '#94a3b8', // slate-400
+              primary: 'var(--color-primary)',
+              secondary: 'var(--color-secondary)',
+              accent: 'var(--color-accent)',
+              background: 'var(--color-background)',
+              surface: 'var(--color-surface)',
+              surfaceHighlight: 'var(--color-surface-highlight)',
+              border: 'var(--color-border)',
+              textMain: 'var(--color-text-main)',
+              textMuted: 'var(--color-text-muted)',
             },
             animation: {
-              'blob': 'blob 7s infinite',
+              'blob': 'blob 10s infinite',
               'fade-in': 'fadeIn 0.5s ease-out',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
             },
             keyframes: {
               blob: {
@@ -57,62 +137,33 @@
         }
       }
     </script>
-    <style>
-      /* Dark Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #020617; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
-      }
-
-      /* Glassmorphism Utilities */
-      .glass {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      
-      .glass-panel {
-        background: rgba(30, 41, 59, 0.4);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.03);
-      }
-    </style>
 <script type="importmap">
-
-
 {
   "imports": {
     "react": "https://esm.sh/react@18.3.1",
     "react-dom": "https://esm.sh/react-dom@18.3.1",
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
-
     "react-router-dom": "https://esm.sh/react-router-dom@6.28.0?external=react,react-dom",
     "@google/genai": "https://esm.sh/@google/genai@latest",
     "lucide-react": "https://esm.sh/lucide-react@0.468.0?external=react,react-dom",
     "recharts": "https://esm.sh/recharts@2.13.3?external=react,react-dom",
     "jspdf": "https://esm.sh/jspdf@2.5.1",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.46.1",
-
-    "mapbox-gl": "https://esm.sh/mapbox-gl@3.9.4",
-    "react-map-gl": "https://esm.sh/react-map-gl@7.1.7?external=react,react-dom,mapbox-gl"
+    "mapbox-gl": "https://esm.sh/mapbox-gl@2.15.0",
+    "react-map-gl": "https://esm.sh/react-map-gl@7.1.7?external=react,react-dom,mapbox-gl",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "vite": "https://esm.sh/vite@^7.3.0"
   }
 }
 </script>
 </head>
-  <body class="bg-background text-textMain antialiased h-screen overflow-hidden selection:bg-primary/30 selection:text-blue-200">
-    <div id="root" class="h-full"></div>
+  <body class="bg-background text-textMain antialiased h-screen overflow-hidden selection:bg-primary/30 selection:text-blue-200 transition-colors duration-300">
+    <!-- NOISE OVERLAY -->
+    <div class="bg-noise"></div>
+    <div id="root" class="h-full relative z-10"></div>
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>

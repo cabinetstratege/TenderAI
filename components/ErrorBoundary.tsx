@@ -10,10 +10,10 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-    error: null,
+    error: null
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -26,12 +26,10 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   private handleHomeClick = () => {
     try {
-      // Safer navigation for sandboxed/iframe environments using HashRouter
       window.location.hash = '/';
       window.location.reload();
     } catch (e) {
       console.error("Navigation failed", e);
-      // Fallback
       window.location.reload();
     }
   };
