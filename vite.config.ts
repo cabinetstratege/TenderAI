@@ -20,7 +20,7 @@ export default defineConfig({
         'jspdf',
         '@supabase/supabase-js',
         'mapbox-gl',
-        'react-map-gl'
+        'react-map-gl/mapbox'
       ]
     }
   },

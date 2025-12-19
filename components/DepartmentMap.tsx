@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Map as MapGL, Source, Layer, FillLayer, LineLayer, MapRef } from 'react-map-gl';
+import { Map as MapGL, Source, Layer, FillLayer, LineLayer, MapRef } from 'react-map-gl/mapbox';
 import { AlertTriangle } from 'lucide-react';
 
 interface DepartmentMapProps {
