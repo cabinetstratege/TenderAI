@@ -1,15 +1,13 @@
 
 import React from 'react';
 import { Lock, Star, CheckCircle, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface PaywallModalProps {
     isOpen: boolean;
+    onGoToPricing?: () => void;
 }
 
-const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen }) => {
-  const navigate = useNavigate();
-
+const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onGoToPricing }) => {
   if (!isOpen) return null;
 
   return (
@@ -52,7 +50,7 @@ const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen }) => {
           </div>
 
           <button 
-            onClick={() => navigate('/pricing')}
+            onClick={onGoToPricing}
             className="w-full py-4 bg-primary hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 group"
           >
               Voir les offres <ArrowRight className="group-hover:translate-x-1 transition-transform"/>

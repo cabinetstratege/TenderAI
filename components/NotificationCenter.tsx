@@ -1,15 +1,19 @@
 
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Clock, AlertTriangle, X, CheckCheck } from 'lucide-react';
 import { notificationService } from '../services/notificationService';
 import { AppNotification } from '../types';
-import { useNavigate } from 'react-router-dom';
 
-const NotificationCenter: React.FC = () => {
+type NotificationCenterProps = {
+    onNavigate?: (path: string) => void;
+};
+
+const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNavigate }) => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
-    const navigate = useNavigate();
     const wrapperRef = useRef<HTMLDivElement>(null);
 
     const loadNotifications = async () => {
@@ -49,7 +53,9 @@ const NotificationCenter: React.FC = () => {
         setNotifications(prev => prev.map(n => n.id === notif.id ? {...n, isRead: true} : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
         
-        navigate(`/tender/${notif.tenderId}`);
+        if (onNavigate) {
+            onNavigate(`/tender/${notif.tenderId}`);
+        }
     };
 
     const handleMarkAllRead = () => {

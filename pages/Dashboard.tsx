@@ -10,9 +10,10 @@ import { TenderStatus, DashboardFilters, Tender, UserProfile } from '../types';
 
 interface DashboardProps {
     userProfile: UserProfile | null;
+    onOpenTender: (id: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
+const Dashboard: React.FC<DashboardProps> = ({ userProfile, onOpenTender }) => {
   const [authorizedTenders, setAuthorizedTenders] = useState<Tender[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [offset, setOffset] = useState(0);
@@ -426,6 +427,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile }) => {
                         userProfile={userProfile}
                         onStatusChange={handleStatusChange} 
                         isVisited={visitedIds.includes(tender.id)}
+                        onOpenTender={(id) => onOpenTender(id)}
                     />
                 </div>
             ))}

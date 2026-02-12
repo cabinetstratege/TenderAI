@@ -76,7 +76,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex h-screen bg-background text-textMain overflow-hidden relative selection:bg-indigo-500/30">
       
       {/* PAYWALL OVERLAY */}
-      <PaywallModal isOpen={isBlocking} />
+      <PaywallModal isOpen={isBlocking} onGoToPricing={() => navigate('/pricing')} />
 
       {/* Background Ambient Glows (Enhanced for Depth) */}
       <div className="fixed top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/10 dark:bg-blue-600/5 rounded-full blur-[130px] pointer-events-none animate-blob"></div>
@@ -134,7 +134,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
            {/* Notification Center Integration */}
            <div className="flex justify-between items-center px-6 mb-4">
                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Alertes</span>
-               <NotificationCenter />
+               <NotificationCenter onNavigate={(path) => navigate(path)} />
            </div>
 
            {/* User Profile / Settings Button */}
@@ -173,7 +173,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <span className="font-bold text-textMain">Le Compagnon</span>
         </div>
         <div className="flex items-center gap-4">
-            <NotificationCenter />
+            <NotificationCenter onNavigate={(path) => {
+              setIsMobileMenuOpen(false);
+              navigate(path);
+            }} />
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-textMuted p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>

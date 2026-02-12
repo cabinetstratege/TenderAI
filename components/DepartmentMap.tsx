@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Map as MapGL, Source, Layer, FillLayer, LineLayer, MapRef } from 'react-map-gl/mapbox';
+import { Map as MapGL, Source, Layer, FillLayer, LineLayer, MapRef } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { AlertTriangle } from 'lucide-react';
 
 interface DepartmentMapProps {
@@ -8,8 +9,8 @@ interface DepartmentMapProps {
 }
 
 const GEOJSON_SOURCE = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson";
-// Use process.env or fallback to the direct string to ensure it works in all environments
-const MAPBOX_TOKEN = process.env.MAPBOX_PUBLIC_KEY || (window as any).process?.env?.MAPBOX_PUBLIC_KEY;
+// Next.js exposes client env vars when prefixed with NEXT_PUBLIC_
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_PUBLIC_KEY;
 const MAP_STYLE = "mapbox://styles/colinjamier/cmj647vzs002u01qudiep8rnx";
 
 const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {

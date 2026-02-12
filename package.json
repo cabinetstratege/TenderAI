@@ -4,25 +4,34 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
+    "@google/genai": "*",
+    "@supabase/supabase-js": "^2.46.1",
+    "jspdf": "^2.5.1",
+    "lucide-react": "^0.468.0",
+    "mapbox-gl": "^3.18.1",
+    "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-map-gl": "^7.1.9",
     "react-router-dom": "^6.28.0",
-    "lucide-react": "^0.468.0",
-    "recharts": "^2.13.3",
-    "@supabase/supabase-js": "^2.46.1",
-    "@google/genai": "*",
-    "jspdf": "^2.5.1"
+    "recharts": "^2.13.3"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^20.11.25",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "autoprefixer": "^10.4.24",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.6.3"
   }
 }

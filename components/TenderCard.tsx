@@ -2,16 +2,16 @@
 import React, { useMemo } from 'react';
 import { Tender, UserProfile, TenderStatus } from '../types';
 import { Calendar, Building, MapPin, Search, XCircle, BookmarkPlus, Euro, Share2, Tag, Eye, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface TenderCardProps {
   tender: Tender;
   userProfile: UserProfile;
   onStatusChange: (tender: Tender, status: TenderStatus) => void;
   isVisited?: boolean;
+  onOpenTender?: (id: string) => void;
 }
 
-const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusChange, isVisited = false }) => {
+const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusChange, isVisited = false, onOpenTender }) => {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-500/20';
@@ -94,13 +94,21 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
           </div>
         </div>
 
-        <Link to={`/tender/${tender.id}`} className="block group/title">
-            <h3 className={`font-bold text-lg leading-snug mb-3 line-clamp-2 transition-colors ${
-                isVisited ? 'text-slate-500 dark:text-slate-400 group-hover/title:text-primary' : 'text-slate-900 dark:text-slate-100 group-hover/title:text-primary'
-            }`}>
+        <button
+          type="button"
+          onClick={() => onOpenTender?.(tender.id)}
+          className="block text-left w-full group/title"
+        >
+          <h3
+            className={`font-bold text-lg leading-snug mb-3 line-clamp-2 transition-colors ${
+              isVisited
+                ? 'text-slate-500 dark:text-slate-400 group-hover/title:text-primary'
+                : 'text-slate-900 dark:text-slate-100 group-hover/title:text-primary'
+            }`}
+          >
             {tender.title}
-            </h3>
-        </Link>
+          </h3>
+        </button>
 
         <div className="space-y-3 mb-5">
           <div className="flex items-center gap-2.5 text-sm text-slate-500 dark:text-slate-400">
@@ -150,13 +158,14 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
 
       <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-3 relative z-10">
         {/* Main Action: Link to Internal Detail (Funnel) */}
-        <Link 
-          to={`/tender/${tender.id}`}
+        <button
+          type="button"
+          onClick={() => onOpenTender?.(tender.id)}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary transition-all group-hover:border-primary/30 shadow-sm"
         >
           <span>Voir l'analyse détaillée</span>
           <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform"/>
-        </Link>
+        </button>
         
         {/* Secondary Actions: Reject / Save */}
         <div className="flex gap-2">

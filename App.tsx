@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import MyTenders from './pages/MyTenders';
@@ -19,6 +19,7 @@ import OnboardingTour from './components/OnboardingTour';
 
 const AppContent = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { session, profile, loading } = useAuth();
     const [showTour, setShowTour] = useState(false);
 
@@ -92,7 +93,7 @@ const AppContent = () => {
                 <Route path="/*" element={
                     <Layout>
                         <Routes>
-                            <Route path="/" element={<Dashboard userProfile={profile} />} />
+                            <Route path="/" element={<Dashboard userProfile={profile} onOpenTender={(id) => navigate(`/tender/${id}`)} />} />
                             <Route path="/tender/:id" element={<TenderDetail />} />
                             <Route path="/my-tenders" element={<MyTenders />} />
                             <Route path="/stats" element={<Stats />} />

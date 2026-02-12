@@ -1,3 +1,4 @@
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -12,6 +13,8 @@ import {
   BrainCircuit, Send, Sparkles, AlertTriangle, 
   CheckCircle, Save, XCircle, Clock, Mail, Phone, User, Share2, Printer, Loader2, Copy, FileText, Trash2, MessageSquareText, Layers, StickyNote, MoreVertical, Download, CalendarPlus
 } from 'lucide-react';
+
+type TenderDetailScreenProps = { tenderId?: string; onBack?: () => void; };
 
 const FormattedMessage = ({ text, role }: { text: string, role: string }) => {
     const paragraphs = text.split('\n\n');
@@ -59,8 +62,8 @@ const parseBold = (text: string) => {
     });
 };
 
-const TenderDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({ tenderId, onBack }) => {
+  const id = tenderId;
   const navigate = useNavigate();
   const [data, setData] = useState<{tender: Tender, interaction?: UserInteraction} | null>(null);
   const [activeTab, setActiveTab] = useState<'description' | 'lots' | 'intelligence'>('description');
@@ -246,8 +249,8 @@ const TenderDetail: React.FC = () => {
   const handleSendEmail = () => {
       if(!data?.tender) return;
       const recipient = userProfile?.contactEmail || "";
-      const subject = `Opportunité AO : ${data.tender.title.substring(0, 60)}...`;
-      const body = `Bonjour,\n\nVoici un appel d'offre intéressant détecté sur Le Compagnon des Marchés.\n\nTITRE : ${data.tender.title}\nACHETEUR : ${data.tender.buyer}\nDATE LIMITE : ${data.tender.deadline}\nBUDGET ESTIMÉ : ${data.tender.estimatedBudget ? (data.tender.estimatedBudget/1000).toFixed(0)+' k€' : 'N/C'}\n\nLien vers l'AO (DCE) : ${data.tender.linkDCE}\n\n--\nGénéré par Le Compagnon des Marchés`;
+      const subject = `OpportunitÃ© AO : ${data.tender.title.substring(0, 60)}...`;
+      const body = `Bonjour,\n\nVoici un appel d'offre intÃ©ressant dÃ©tectÃ© sur Le Compagnon des MarchÃ©s.\n\nTITRE : ${data.tender.title}\nACHETEUR : ${data.tender.buyer}\nDATE LIMITE : ${data.tender.deadline}\nBUDGET ESTIMÃ‰ : ${data.tender.estimatedBudget ? (data.tender.estimatedBudget/1000).toFixed(0)+' kâ‚¬' : 'N/C'}\n\nLien vers l'AO (DCE) : ${data.tender.linkDCE}\n\n--\nGÃ©nÃ©rÃ© par Le Compagnon des MarchÃ©s`;
       
       window.open(`mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
       setIsShareOpen(false);
@@ -333,7 +336,7 @@ END:VCALENDAR`;
           doc.setFont("helvetica", "bold");
           doc.text(`Budget Est. :`, margin, y);
           doc.setFont("helvetica", "normal");
-          doc.text(`${(data.tender.estimatedBudget/1000).toLocaleString()} k€`, margin + 25, y);
+          doc.text(`${(data.tender.estimatedBudget/1000).toLocaleString()} kâ‚¬`, margin + 25, y);
           y += 8;
       }
       
@@ -374,14 +377,14 @@ END:VCALENDAR`;
       
       {/* HEADER */}
       <div className="flex items-start gap-4">
-        <button onClick={() => navigate(-1)} className="mt-1 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-textMain transition-colors border border-transparent hover:border-border">
+        <button onClick={() => (onBack ? onBack() : window.history.back())} className="mt-1 p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-400 hover:text-textMain transition-colors border border-transparent hover:border-border">
             <ArrowLeft size={24} />
         </button>
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-2">
                 <span className="text-xs font-mono text-slate-500 bg-slate-200 dark:bg-slate-800/50 px-2 py-0.5 rounded border border-border">{tender.idWeb}</span>
-                {interaction?.status === TenderStatus.TODO && <span className="text-xs font-bold text-blue-500 dark:text-blue-400 flex items-center gap-1"><CheckCircle size={12}/> À Qualifier</span>}
-                {interaction?.status === TenderStatus.IN_PROGRESS && <span className="text-xs font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1"><BrainCircuit size={12}/> En Rédaction</span>}
+                {interaction?.status === TenderStatus.TODO && <span className="text-xs font-bold text-blue-500 dark:text-blue-400 flex items-center gap-1"><CheckCircle size={12}/> Ã€ Qualifier</span>}
+                {interaction?.status === TenderStatus.IN_PROGRESS && <span className="text-xs font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1"><BrainCircuit size={12}/> En RÃ©daction</span>}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-textMain leading-tight">{tender.title}</h1>
         </div>
@@ -412,7 +415,7 @@ END:VCALENDAR`;
                          <div className="h-px bg-border my-1"></div>
                          <button onClick={handleDownloadTenderPDF} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm text-slate-700 dark:text-slate-200 transition-colors text-left group">
                              <div className="p-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md group-hover:bg-slate-200 dark:group-hover:bg-slate-600"><Download size={16}/></div>
-                             <span className="font-medium">Télécharger la fiche (PDF)</span>
+                             <span className="font-medium">TÃ©lÃ©charger la fiche (PDF)</span>
                          </button>
                      </div>
                  </div>
@@ -431,7 +434,7 @@ END:VCALENDAR`;
                         <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 text-slate-600 dark:text-slate-400">Match</span>
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 italic px-4">
-                        Basé sur votre expertise en <span className="text-slate-900 dark:text-white font-medium">{userProfile?.specialization}</span>
+                        BasÃ© sur votre expertise en <span className="text-slate-900 dark:text-white font-medium">{userProfile?.specialization}</span>
                     </p>
                 </div>
 
@@ -448,7 +451,7 @@ END:VCALENDAR`;
                             <div className="p-2.5 bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg shadow-sm"><MapPin size={20} /></div>
                             <div className="min-w-0">
                                 <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Lieu</p>
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">Départements: {tender.departments.join(', ')}</p>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">DÃ©partements: {tender.departments.join(', ')}</p>
                             </div>
                         </div>
                         {/* MAP COMPONENT INTEGRATION */}
@@ -459,9 +462,9 @@ END:VCALENDAR`;
                     <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 transition-colors hover:border-slate-300 dark:hover:border-white/10">
                         <div className="p-2.5 bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg shadow-sm"><Euro size={20} /></div>
                         <div className="min-w-0">
-                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Budget Estimé</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Budget EstimÃ©</p>
                             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                {tender.estimatedBudget ? `${(tender.estimatedBudget/1000).toLocaleString()} k€` : 'Non détecté'}
+                                {tender.estimatedBudget ? `${(tender.estimatedBudget/1000).toLocaleString()} kâ‚¬` : 'Non dÃ©tectÃ©'}
                             </p>
                         </div>
                     </div>
@@ -650,9 +653,9 @@ END:VCALENDAR`;
                                 <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <BrainCircuit size={32} className="text-blue-500 dark:text-blue-400" />
                                 </div>
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Analyse Stratégique</h3>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Analyse StratÃ©gique</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                                    Laissez l'IA scanner les pièces du marché pour identifier les risques et opportunités cachés.
+                                    Laissez l'IA scanner les piÃ¨ces du marchÃ© pour identifier les risques et opportunitÃ©s cachÃ©s.
                                 </p>
                                 <button 
                                     onClick={handleGenerateStrategy}
@@ -665,7 +668,7 @@ END:VCALENDAR`;
                         ) : (
                             <div className="space-y-4 mb-8 animate-in fade-in slide-in-from-top-4">
                                 <div className="flex items-center justify-between px-2">
-                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2"><Sparkles size={14}/> Synthèse Stratégique</h3>
+                                    <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide flex items-center gap-2"><Sparkles size={14}/> SynthÃ¨se StratÃ©gique</h3>
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold border shadow-sm ${
                                         analysis.workload === 'Faible' ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' :
                                         analysis.workload === 'Moyenne' ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20' :
@@ -702,7 +705,7 @@ END:VCALENDAR`;
                         {/* 2. QUICK ACTIONS (Contextual Prompts) */}
                         <div className="grid grid-cols-3 gap-3 mb-6">
                             <button 
-                                onClick={() => handleChatSend("Rédige une lettre de candidature formelle pour cet AO. Inclus l'objet, les références, et mets en avant nos certifications.")}
+                                onClick={() => handleChatSend("RÃ©dige une lettre de candidature formelle pour cet AO. Inclus l'objet, les rÃ©fÃ©rences, et mets en avant nos certifications.")}
                                 disabled={isChatting}
                                 className="p-3 bg-white dark:bg-slate-800/40 hover:bg-blue-50 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-200 dark:hover:border-slate-600 text-center group disabled:opacity-50 transition-all shadow-sm"
                             >
@@ -710,20 +713,20 @@ END:VCALENDAR`;
                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block">Lettre Type</span>
                             </button>
                             <button 
-                                onClick={() => handleChatSend("Propose un plan détaillé pour le Mémoire Technique de cet AO, structuré en grands chapitres.")}
+                                onClick={() => handleChatSend("Propose un plan dÃ©taillÃ© pour le MÃ©moire Technique de cet AO, structurÃ© en grands chapitres.")}
                                 disabled={isChatting}
                                 className="p-3 bg-white dark:bg-slate-800/40 hover:bg-purple-50 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-200 dark:hover:border-slate-600 text-center group disabled:opacity-50 transition-all shadow-sm"
                             >
                                 <BrainCircuit size={20} className="text-purple-500 dark:text-purple-400 mx-auto mb-2 group-hover:scale-110 transition-transform"/>
-                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block">Plan Mémoire</span>
+                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block">Plan MÃ©moire</span>
                             </button>
                             <button 
-                                onClick={() => handleChatSend("Rédige une synthèse exécutive de notre réponse pour le décideur (Maire/Directeur).")}
+                                onClick={() => handleChatSend("RÃ©dige une synthÃ¨se exÃ©cutive de notre rÃ©ponse pour le dÃ©cideur (Maire/Directeur).")}
                                 disabled={isChatting}
                                 className="p-3 bg-white dark:bg-slate-800/40 hover:bg-amber-50 dark:hover:bg-slate-700/60 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-amber-200 dark:hover:border-slate-600 text-center group disabled:opacity-50 transition-all shadow-sm"
                             >
                                 <Sparkles size={20} className="text-amber-500 dark:text-amber-400 mx-auto mb-2 group-hover:scale-110 transition-transform"/>
-                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block">Synthèse</span>
+                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block">SynthÃ¨se</span>
                             </button>
                         </div>
 
@@ -732,7 +735,7 @@ END:VCALENDAR`;
                             {chatHistory.length === 0 && (
                                 <div className="text-center py-12 opacity-30">
                                     <MessageSquareText size={48} className="mx-auto mb-3 text-slate-400"/>
-                                    <p className="text-sm text-slate-500 font-medium">L'assistant est prêt à rédiger.</p>
+                                    <p className="text-sm text-slate-500 font-medium">L'assistant est prÃªt Ã  rÃ©diger.</p>
                                 </div>
                             )}
                             {chatHistory.map((msg, idx) => (
@@ -816,4 +819,11 @@ END:VCALENDAR`;
   );
 };
 
+const TenderDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  return <TenderDetailScreen tenderId={id} onBack={() => navigate(-1)} />;
+};
+
 export default TenderDetail;
+
