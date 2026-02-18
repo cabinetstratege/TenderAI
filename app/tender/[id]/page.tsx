@@ -1,17 +1,16 @@
-﻿"use client";
+"use client";
 
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import LayoutNext from '../../../components/LayoutNext';
+import TenderDetailScreen from '../../../components/TenderDetailScreen';
 import { useAuth } from '../../../context/AuthContext';
-import { TenderDetailScreen } from '../../../pages/TenderDetail';
 
 export default function TenderDetailPage() {
-  const params = useParams();
   const router = useRouter();
-  const { session, profile, loading } = useAuth();
-
+  const params = useParams<{ id: string }>();
   const tenderId = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  const { session, profile, loading } = useAuth();
   const hasProfile = !!profile;
 
   if (loading || (!session && !loading) || (session && !hasProfile)) {
@@ -29,6 +28,11 @@ export default function TenderDetailPage() {
 
   if (session && !hasProfile) {
     router.replace('/welcome');
+    return null;
+  }
+
+  if (!tenderId) {
+    router.replace('/');
     return null;
   }
 

@@ -8,7 +8,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const stripe = stripeSecret
-  ? new Stripe(stripeSecret, { apiVersion: '2023-10-16' })
+  ? new Stripe(stripeSecret) // rely on account default API version
   : (null as unknown as Stripe);
 
 function log(message: string, extra?: Record<string, unknown>) {

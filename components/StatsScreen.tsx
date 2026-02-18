@@ -259,7 +259,11 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
                     <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-400 shrink-0">{idx + 1}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-end mb-1">
-                        <button className="font-bold text-slate-200 truncate pr-2 group-hover:text-primary transition-colors text-left" onClick={() => onNavigateTender?.(comp.lastTenderId)}>
+                        <button
+                          className="font-bold text-slate-200 truncate pr-2 group-hover:text-primary transition-colors text-left"
+                          disabled={!comp.lastTenderId}
+                          onClick={() => comp.lastTenderId && onNavigateTender?.(comp.lastTenderId)}
+                        >
                           {comp.name}
                         </button>
                         <span className="text-xs font-bold text-emerald-400">{comp.winCount} victoires</span>

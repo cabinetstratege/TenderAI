@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import Dashboard from '../pages/Dashboard';
 import LayoutNext from '../components/LayoutNext';
+import DashboardScreen from '../components/DashboardScreen';
 
 export default function Home() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function Home() {
 
   return (
     <LayoutNext>
-      <Dashboard
+      <DashboardScreen
         userProfile={profile}
         onOpenTender={(id) => router.push(`/tender/${id}`)}
       />

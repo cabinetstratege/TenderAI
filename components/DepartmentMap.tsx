@@ -77,6 +77,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   const highlightLayer: FillLayer = {
     id: 'dept-highlight',
     type: 'fill',
+    source: 'france-depts',
     paint: {
       'fill-color': '#29b5ff', // Sky-400 (Light Blue)
       'fill-opacity': 0.6,
@@ -88,6 +89,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   const highlightOutlineLayer: LineLayer = {
     id: 'dept-highlight-outline',
     type: 'line',
+    source: 'france-depts',
     paint: {
       'line-color': '#bae6fd', // Sky-200 (Very Light Blue)
       'line-width': 2,
@@ -100,6 +102,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
   const baseOutlineLayer: LineLayer = {
     id: 'dept-outline',
     type: 'line',
+    source: 'france-depts',
     paint: {
       'line-color': '#1e293b', // Slate-800
       'line-width': 0.5,

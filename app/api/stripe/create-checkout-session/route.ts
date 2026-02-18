@@ -10,7 +10,7 @@ if (!stripeSecret) {
 }
 
 const stripe = stripeSecret
-  ? new Stripe(stripeSecret, { apiVersion: '2023-10-16' })
+  ? new Stripe(stripeSecret) // use account's default API version to avoid mismatches
   : (null as unknown as Stripe);
 
 export async function POST(req: Request) {

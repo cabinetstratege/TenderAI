@@ -135,6 +135,7 @@ export interface CompetitorStat {
     winCount: number;
     totalAmount: number;
     topBuyer: string; // Le client chez qui ils gagnent le plus
+    lastTenderId?: string;
 }
 
 export interface MarketAnalysis {

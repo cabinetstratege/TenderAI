@@ -121,7 +121,7 @@ const extractCPVs = (lot: any): string[] => {
         }
     }
     
-    return [...new Set(cpvs)]; // Unique
+    return Array.from(new Set(cpvs)); // Unique
 };
 
 // --- CACHE HELPERS ---

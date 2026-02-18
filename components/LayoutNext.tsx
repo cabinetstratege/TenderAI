@@ -40,6 +40,7 @@ const NavItem = ({
   id?: string;
 }) => {
   const pathname = usePathname();
+  if (!pathname) return null;
   const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
 
   return (

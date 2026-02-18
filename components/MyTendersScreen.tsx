@@ -244,6 +244,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             onNavigateTender={onNavigateTender}
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50 opacity-80"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
+            icon={<CheckCircle size={16} className="text-emerald-500" />}
           />
         </div>
       </div>
