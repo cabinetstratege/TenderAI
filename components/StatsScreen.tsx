@@ -1,7 +1,8 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import React, { useEffect, useState, useCallback } from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { tenderService } from '../services/tenderService';
 import { userService } from '../services/userService';
 import { TenderStatus, UserProfile, MarketAnalysis } from '../types';
@@ -19,7 +20,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
   const [period, setPeriod] = useState<'30d' | '90d' | 'year' | 'all'>('year');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     const profile = await userService.getCurrentProfile();
     setUserProfile(profile);
@@ -102,11 +103,11 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
     }
 
     setLoading(false);
-  };
+  }, [period]);
 
   useEffect(() => {
     fetchStats();
-  }, [period]);
+  }, [fetchStats]);
 
   const handleExport = () => {
     alert('Export PDF généré !');

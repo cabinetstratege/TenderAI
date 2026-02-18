@@ -1,5 +1,6 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+/* eslint-disable react/no-unescaped-entities */
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { tenderService } from '../services/tenderService';
 import { userService } from '../services/userService';
 import TenderCard from '../components/TenderCard';
@@ -56,7 +57,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onOpenTender }) => {
       return () => clearTimeout(handler);
   }, [filters.searchTerm]);
 
-  const fetchTenders = async (currentOffset: number, isNewSearch: boolean) => {
+  const fetchTenders = useCallback(async (currentOffset: number, isNewSearch: boolean) => {
     if (!userProfile) return;
     
     if (isNewSearch) {
@@ -107,7 +108,7 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onOpenTender }) => {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  };
+  }, [debouncedSearchTerm, filters, userProfile]);
 
   // Re-fetch when major filters change (Search, Region, Procedure)
   // We use debouncedSearchTerm to avoid hammering API
@@ -122,7 +123,8 @@ const Dashboard: React.FC<DashboardProps> = ({ userProfile, onOpenTender }) => {
       filters.selectedRegion, 
       filters.procedureType, 
       filters.publicationDate, 
-      filters.rawKeywords
+      filters.rawKeywords,
+      fetchTenders
   ]);
 
   // Load saved filters on mount

@@ -68,7 +68,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         zoom: 4.2,
         duration: 1500
     });
-  }, [departments, geoJsonData, isMapLoaded]);
+  }, [departments, geoJsonData, isMapLoaded, codes]);
 
 
   // --- Layers ---

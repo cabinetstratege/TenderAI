@@ -1,8 +1,6 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/auth/page": "app/auth/page.js",
-  "/page": "app/page.js",
-  "/my-tenders/page": "app/my-tenders/page.js",
-  "/stats/page": "app/stats/page.js",
-  "/profile/page": "app/profile/page.js"
+  "/pricing/page": "app/pricing/page.js",
+  "/api/stripe/create-portal-session/route": "app/api/stripe/create-portal-session/route.js",
+  "/api/stripe/webhook/route": "app/api/stripe/webhook/route.js"
 }

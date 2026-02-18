@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 
 import React, { useMemo } from 'react';
 import { Tender, UserProfile, TenderStatus } from '../types';

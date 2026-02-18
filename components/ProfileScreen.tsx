@@ -1,5 +1,6 @@
 ﻿"use client";
 
+/* eslint-disable react/no-unescaped-entities */
 import React, { useState, useEffect, useRef } from 'react';
 import { userService } from '../services/userService';
 import { suggestCPVCodes } from '../services/geminiService';
