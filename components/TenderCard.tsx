@@ -146,7 +146,7 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
             </div>
         )}
 
-        <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl p-3 mb-4 flex-1 border border-slate-100 dark:border-white/5 relative">
+        <div className="bg-[var(--color-surface-highlight)] dark:bg-[var(--color-surface)] rounded-xl p-3 mb-4 flex-1 border border-slate-100 dark:border-white/5 relative">
           <div className="flex items-center gap-2 mb-2 text-slate-400">
             <Search size={14} className="text-blue-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Contexte Détecté</span>
@@ -157,7 +157,7 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
         </div>
       </div>
 
-      <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/30 space-y-3 relative z-10">
+      <div className="p-4 border-t border-border bg-[color:var(--color-surface-highlight)] dark:bg-[color:var(--color-surface)] space-y-3 relative z-10">
         {/* Main Action: Link to Internal Detail (Funnel) */}
         <button
           type="button"

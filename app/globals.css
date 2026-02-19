@@ -65,7 +65,7 @@ body {
 
 /* Harmonise les utilitaires bg-slate-50 en mode sombre pour éviter les halos */
 .dark .bg-slate-50 {
-  background-color: var(--color-surface) !important;
+  background-color: var(--color-surface);
 }
 
 /* Sidebar gradient (couleur de fin variable selon le thème) */
