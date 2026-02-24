@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { tenderService } from '../services/tenderService';
 import { TenderStatus, Tender, UserInteraction } from '../types';
-import { Loader2, ArrowRight, ArrowLeft, FileText, X, AlertCircle, CheckCircle, BrainCircuit } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Ban, X, AlertCircle, CheckCircle, BrainCircuit } from 'lucide-react';
 import RefreshButton from './RefreshButton';
 
 type MyTendersScreenProps = {
@@ -15,13 +15,31 @@ interface KanbanCardProps {
   onNoteClick: (tenderId: string, note: string) => void;
   onStatusChange: (tenderId: string, status: TenderStatus) => void;
   onNavigateTender?: (id: string) => void;
+  onDragStart?: (id: string, status: TenderStatus) => void;
+  onDragEnd?: () => void;
+  disableClick?: boolean;
 }
 
-const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange, onNavigateTender }) => {
+const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange, onNavigateTender, onDragStart, onDragEnd, disableClick }) => {
   const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <div className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all flex flex-col gap-3 group relative">
+    <div
+      className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all flex flex-col gap-3 group relative cursor-grab active:cursor-grabbing"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', item.tender.id);
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart?.(item.tender.id, item.interaction.status);
+      }}
+      onDragEnd={onDragEnd}
+      onClick={(e) => {
+        if (e.defaultPrevented) return;
+        if (!disableClick) {
+          onNavigateTender?.(item.tender.id);
+        }
+      }}
+    >
       <div className="flex justify-between items-start">
         <span className="text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">{item.tender.idWeb}</span>
         {daysRemaining < 5 ? (
@@ -36,7 +54,10 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
       </div>
 
       <button
-        onClick={() => onNavigateTender?.(item.tender.id)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onNavigateTender?.(item.tender.id);
+        }}
         className="font-semibold text-sm text-slate-800 dark:text-slate-200 line-clamp-2 text-left hover:text-primary transition-colors"
       >
         {item.tender.title}
@@ -46,20 +67,31 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
       {item.interaction.internalNotes && (
         <div
           className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-2 rounded text-[10px] text-amber-700 dark:text-amber-200/80 truncate cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-950/40"
-          onClick={() => onNoteClick(item.tender.id, item.interaction.internalNotes || '')}
+          onClick={(e) => {
+            e.stopPropagation();
+            onNoteClick(item.tender.id, item.interaction.internalNotes || '');
+          }}
         >
           Note : {item.interaction.internalNotes}
         </div>
       )}
 
       <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
-        <button onClick={() => onNoteClick(item.tender.id, item.interaction.internalNotes || '')} className="text-slate-400 hover:text-textMain" title="Notes">
-          <FileText size={14} />
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onStatusChange(item.tender.id, TenderStatus.BLACKLISTED);
+          }}
+          className="text-slate-400 hover:text-textMain cursor-pointer"
+          title="Blacklister"
+        >
+          <Ban size={14} />
         </button>
 
         <div className="flex gap-1">
           {item.interaction.status !== TenderStatus.TODO && (
             <button
+              onClickCapture={(e) => e.stopPropagation()}
               onClick={() => {
                 const prev =
                   item.interaction.status === TenderStatus.IN_PROGRESS
@@ -69,7 +101,8 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
                     : TenderStatus.SUBMITTED;
                 onStatusChange(item.tender.id, prev);
               }}
-              className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-textMain"
+              className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-textMain cursor-pointer"
+              title="Revenir à l'étape précédente"
             >
               <ArrowLeft size={14} />
             </button>
@@ -77,16 +110,20 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
 
           {item.interaction.status === TenderStatus.TODO && (
             <button
+              onClickCapture={(e) => e.stopPropagation()}
               onClick={() => onStatusChange(item.tender.id, TenderStatus.IN_PROGRESS)}
-              className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors"
+              className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors cursor-pointer"
+              title="Passer en rédaction"
             >
               <ArrowRight size={14} />
             </button>
           )}
           {item.interaction.status === TenderStatus.IN_PROGRESS && (
             <button
+              onClickCapture={(e) => e.stopPropagation()}
               onClick={() => onStatusChange(item.tender.id, TenderStatus.SUBMITTED)}
-              className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors"
+              className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors cursor-pointer"
+              title="Marquer comme soumise"
             >
               <ArrowRight size={14} />
             </button>
@@ -94,16 +131,18 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
           {item.interaction.status === TenderStatus.SUBMITTED && (
             <div className="flex gap-1">
               <button
+                onClickCapture={(e) => e.stopPropagation()}
                 onClick={() => onStatusChange(item.tender.id, TenderStatus.WON)}
-                className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white rounded border border-emerald-200 dark:border-emerald-900/50"
-                title="Gagné"
+                className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white rounded border border-emerald-200 dark:border-emerald-900/50 cursor-pointer"
+                title="Marquer comme gagné"
               >
                 <CheckCircle size={14} />
               </button>
               <button
+                onClickCapture={(e) => e.stopPropagation()}
                 onClick={() => onStatusChange(item.tender.id, TenderStatus.LOST)}
-                className="p-1.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white rounded border border-red-200 dark:border-red-900/50"
-                title="Perdu"
+                className="p-1.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white rounded border border-red-200 dark:border-red-900/50 cursor-pointer"
+                title="Marquer comme perdu"
               >
                 <X size={14} />
               </button>
@@ -120,6 +159,9 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
   const [isLoading, setIsLoading] = useState(true);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [currentNote, setCurrentNote] = useState('');
+  const [dragItem, setDragItem] = useState<{ id: string; from: TenderStatus } | null>(null);
+  const [hoveredStatus, setHoveredStatus] = useState<TenderStatus | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const refreshData = async () => {
     setIsLoading(true);
@@ -173,6 +215,24 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
     }
   };
 
+  const handleDragStart = (id: string, from: TenderStatus) => {
+    setDragItem({ id, from });
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setDragItem(null);
+    setHoveredStatus(null);
+    setIsDragging(false);
+  };
+
+  const handleDropOnColumn = (targetStatus: TenderStatus) => {
+    if (dragItem && dragItem.from !== targetStatus) {
+      handleUpdateStatus(dragItem.id, targetStatus);
+    }
+    handleDragEnd();
+  };
+
   const getColumnData = (status: TenderStatus) => data.filter((item) => item.interaction.status === status);
 
   if (isLoading) {
@@ -208,6 +268,13 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
             icon={<CheckCircle size={16} className="text-slate-500" />}
+            onCardDragStart={handleDragStart}
+            onCardDragEnd={handleDragEnd}
+            onDropItem={handleDropOnColumn}
+            isHovered={hoveredStatus === TenderStatus.TODO}
+            onDragEnterColumn={() => setHoveredStatus(TenderStatus.TODO)}
+            onDragLeaveColumn={() => setHoveredStatus(null)}
+            disableCardClick={isDragging}
           />
 
           <KanbanColumn
@@ -221,6 +288,13 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             headerClass="bg-blue-100 dark:bg-blue-900/20"
             icon={<BrainCircuit size={16} className="text-blue-500" />}
             badgeClass="bg-blue-200 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30"
+            onCardDragStart={handleDragStart}
+            onCardDragEnd={handleDragEnd}
+            onDropItem={handleDropOnColumn}
+            isHovered={hoveredStatus === TenderStatus.IN_PROGRESS}
+            onDragEnterColumn={() => setHoveredStatus(TenderStatus.IN_PROGRESS)}
+            onDragLeaveColumn={() => setHoveredStatus(null)}
+            disableCardClick={isDragging}
           />
 
           <KanbanColumn
@@ -233,6 +307,13 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
             icon={<ArrowRight size={16} className="text-purple-500" />}
+            onCardDragStart={handleDragStart}
+            onCardDragEnd={handleDragEnd}
+            onDropItem={handleDropOnColumn}
+            isHovered={hoveredStatus === TenderStatus.SUBMITTED}
+            onDragEnterColumn={() => setHoveredStatus(TenderStatus.SUBMITTED)}
+            onDragLeaveColumn={() => setHoveredStatus(null)}
+            disableCardClick={isDragging}
           />
 
           <KanbanColumn
@@ -245,6 +326,13 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50 opacity-80"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
             icon={<CheckCircle size={16} className="text-emerald-500" />}
+            onCardDragStart={handleDragStart}
+            onCardDragEnd={handleDragEnd}
+            onDropItem={handleDropOnColumn}
+            isHovered={hoveredStatus === TenderStatus.WON}
+            onDragEnterColumn={() => setHoveredStatus(TenderStatus.WON)}
+            onDragLeaveColumn={() => setHoveredStatus(null)}
+            disableCardClick={isDragging}
           />
         </div>
       </div>
@@ -290,6 +378,13 @@ const KanbanColumn = ({
   headerClass,
   icon,
   badgeClass,
+  onCardDragStart,
+  onCardDragEnd,
+  onDropItem,
+  isHovered,
+  onDragEnterColumn,
+  onDragLeaveColumn,
+  disableCardClick,
 }: {
   title: string;
   status: TenderStatus;
@@ -301,8 +396,33 @@ const KanbanColumn = ({
   headerClass: string;
   icon: React.ReactNode;
   badgeClass?: string;
+  onCardDragStart?: (id: string, status: TenderStatus) => void;
+  onCardDragEnd?: () => void;
+  onDropItem?: (status: TenderStatus) => void;
+  isHovered?: boolean;
+  onDragEnterColumn?: () => void;
+  onDragLeaveColumn?: () => void;
+  disableCardClick?: boolean;
 }) => (
-  <div className={`flex-1 min-w-[280px] flex flex-col border rounded-2xl h-full ${colorClass}`}>
+  <div
+    className={`flex-1 min-w-[280px] flex flex-col border rounded-2xl h-full transition-colors ${colorClass} ${
+      isHovered ? 'border-dashed border-primary bg-primary/5 dark:bg-primary/10' : ''
+    }`}
+    onDragOver={(e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      onDragEnterColumn?.();
+    }}
+    onDragEnter={(e) => {
+      e.preventDefault();
+      onDragEnterColumn?.();
+    }}
+    onDragLeave={onDragLeaveColumn}
+    onDrop={(e) => {
+      e.preventDefault();
+      onDropItem?.(status);
+    }}
+  >
     <div className={`p-4 border-b flex justify-between items-center rounded-t-2xl ${headerClass}`}>
       <h3 className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
         {icon} {title}
@@ -311,7 +431,16 @@ const KanbanColumn = ({
     </div>
     <div className="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
       {items.map((item) => (
-        <KanbanCard key={item.tender.id} item={item} onNoteClick={onNoteClick} onStatusChange={onStatusChange} onNavigateTender={onNavigateTender} />
+        <KanbanCard
+          key={item.tender.id}
+          item={item}
+          onNoteClick={onNoteClick}
+          onStatusChange={onStatusChange}
+          onNavigateTender={onNavigateTender}
+          onDragStart={onCardDragStart}
+          onDragEnd={onCardDragEnd}
+          disableClick={disableCardClick}
+        />
       ))}
     </div>
   </div>

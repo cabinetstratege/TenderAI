@@ -399,19 +399,37 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                 <div className="flex gap-2 text-sm font-semibold text-textMain">
                   <button
                     onClick={() => setActiveTab("description")}
-                    className={`px-3 py-1 rounded-lg ${activeTab === "description" ? "bg-primary/10 text-primary" : "text-textMuted hover:text-textMain"}`}
+                    className={`px-3 py-1 rounded-lg transition-colors duration-150 cursor-pointer ${
+                      activeTab === "description"
+                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                        : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                    aria-pressed={activeTab === "description"}
+                    title="Voir la description"
                   >
                     Description
                   </button>
                   <button
                     onClick={() => setActiveTab("lots")}
-                    className={`px-3 py-1 rounded-lg ${activeTab === "lots" ? "bg-primary/10 text-primary" : "text-textMuted hover:text-textMain"}`}
+                    className={`px-3 py-1 rounded-lg transition-colors duration-150 cursor-pointer ${
+                      activeTab === "lots"
+                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                        : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                    aria-pressed={activeTab === "lots"}
+                    title="Voir les lots"
                   >
                     Lots
                   </button>
                   <button
                     onClick={() => setActiveTab("intelligence")}
-                    className={`px-3 py-1 rounded-lg ${activeTab === "intelligence" ? "bg-primary/10 text-primary" : "text-textMuted hover:text-textMain"}`}
+                    className={`px-3 py-1 rounded-lg transition-colors duration-150 cursor-pointer ${
+                      activeTab === "intelligence"
+                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                        : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
+                    }`}
+                    aria-pressed={activeTab === "intelligence"}
+                    title="Voir l'intelligence"
                   >
                     Intelligence
                   </button>
