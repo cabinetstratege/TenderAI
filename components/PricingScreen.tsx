@@ -127,11 +127,11 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
 
         <div className="flex justify-center mt-8">
           <div className="bg-white dark:bg-surface rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden w-full max-w-md relative group hover:border-blue-500/30 transition-all duration-300 transform hover:-translate-y-1">
-            <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-lg">
+            <div className="absolute top-0 right-0 bg-blue-500 dark:bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-lg">
               POPULAIRE
             </div>
 
-            <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-800/50 dark:to-slate-900/50">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-900">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
                 Abonnement Mensuel Pro
               </h3>
