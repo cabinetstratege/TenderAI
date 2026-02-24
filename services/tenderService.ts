@@ -716,6 +716,31 @@ export const tenderService = {
 
     if (error) console.error("Supabase update error", error);
   },
+  deleteInteraction: async (tenderId: string): Promise<void> => {
+    if (userService.isDemoMode()) {
+      const local = localStorage.getItem("demo_interactions");
+      const interactions: UserInteraction[] = local
+        ? JSON.parse(local)
+        : MOCK_INTERACTIONS.map((i) => i.interaction);
+      const filtered = interactions.filter((i) => i.tenderId !== tenderId);
+      localStorage.setItem("demo_interactions", JSON.stringify(filtered));
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+    const userId = session.user.id;
+
+    const { error } = await supabase
+      .from("user_interactions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("tender_id", tenderId);
+
+    if (error) console.error("Supabase delete error", error);
+  },
 
   getTenderById: async (
     id: string,
