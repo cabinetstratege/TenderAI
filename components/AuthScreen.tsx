@@ -1,9 +1,17 @@
-'use client';
+﻿"use client";
 
-import React, { useState } from 'react';
-import { supabase } from '../services/supabaseClient';
-import { userService } from '../services/userService';
-import { Lock, Mail, Loader2, ArrowRight, CheckCircle, Compass, Play } from 'lucide-react';
+import React, { useState } from "react";
+import { supabase } from "../services/supabaseClient";
+import { userService } from "../services/userService";
+import {
+  Lock,
+  Mail,
+  Loader2,
+  ArrowRight,
+  CheckCircle,
+  Compass,
+  Play,
+} from "lucide-react";
 
 type AuthScreenProps = {
   onAuthenticated?: () => void;
@@ -11,9 +19,10 @@ type AuthScreenProps = {
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -34,7 +43,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         if (data.user && data.session) {
           onAuthenticated?.();
         } else if (data.user && !data.session) {
-          setSuccessMsg("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer.");
+          setSuccessMsg(
+            "Compte créé avec succÃ¨s ! Veuillez vérifier votre email pour confirmer.",
+          );
           setLoading(false);
           return;
         }
@@ -47,14 +58,36 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         onAuthenticated?.();
       }
     } catch (err: any) {
-      setError(err.message || 'Une erreur est survenue');
+      setError(err.message || "Une erreur est survenue");
       setLoading(false);
     }
   };
 
   const handleDemoLogin = () => {
     userService.setDemoMode(true);
-    onAuthenticated ? onAuthenticated() : (window.location.href = '/');
+    onAuthenticated ? onAuthenticated() : (window.location.href = "/");
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError("Renseignez votre email pour réinitialiser votre mot de passe.");
+      return;
+    }
+    setResetLoading(true);
+    setError(null);
+    setSuccessMsg(null);
+    try {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setSuccessMsg("Un lien de réinitialisation vous a été envoyé.");
+    } catch (err: any) {
+      setError(
+        err.message || "Impossible d'envoyer l'email de réinitialisation.",
+      );
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const toggleMode = () => {
@@ -75,13 +108,17 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             <Compass className="text-white" size={32} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Le Compagnon</h1>
-            <p className="text-blue-600 dark:text-blue-400 font-medium">des Marchés Publics</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Le Compagnon
+            </h1>
+            <p className="text-blue-600 dark:text-blue-400 font-medium">
+              des Marchés Publics
+            </p>
           </div>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
             {isSignUp
-              ? 'Créez votre compte pour démarrer votre essai gratuit de 24h.'
-              : 'Connectez-vous à votre espace de veille.'}
+              ? "Créez votre compte pour démarrer votre essai gratuit de 24h."
+              : "Connectez-vous Ã  votre espace de veille."}
           </p>
         </div>
 
@@ -101,9 +138,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         {!successMsg && (
           <form onSubmit={handleAuth} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Email professionnel</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Email professionnel
+              </label>
               <div className="relative group">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
+                <Mail
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors"
+                  size={18}
+                />
                 <input
                   type="email"
                   required
@@ -116,19 +158,38 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Mot de passe</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">
+                Mot de passe
+              </label>
               <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors" size={18} />
+                <Lock
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors"
+                  size={18}
+                />
                 <input
                   type="password"
                   required
                   minLength={6}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition-all"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
+              {!isSignUp && (
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={handlePasswordReset}
+                    disabled={resetLoading}
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+                  >
+                    {resetLoading
+                      ? "Envoi en cours..."
+                      : "Mot de passe oublié ?"}
+                  </button>
+                </div>
+              )}
             </div>
 
             <button
@@ -140,7 +201,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                 <Loader2 className="animate-spin" />
               ) : (
                 <>
-                  {isSignUp ? 'Créer mon compte (Essai 24h)' : 'Se connecter'}
+                  {isSignUp ? "Créer mon compte (Essai 24h)" : "Se connecter"}
                   <ArrowRight size={18} />
                 </>
               )}
@@ -148,25 +209,33 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           </form>
         )}
 
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
-          <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase">Ou essayer sans compte</span>
-          <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
-        </div>
+        {isSignUp && (
+          <>
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+              <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase">
+                Ou essayer sans compte
+              </span>
+              <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+            </div>
 
-        <button
-          onClick={handleDemoLogin}
-          className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
-        >
-          <Play size={18} /> Mode Démo (Données fictives)
-        </button>
+            <button
+              onClick={handleDemoLogin}
+              className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
+            >
+              <Play size={18} /> Mode Démo (Données fictives)
+            </button>
+          </>
+        )}
 
         <div className="text-center pt-2">
           <button
             onClick={toggleMode}
             className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition-all"
           >
-            {isSignUp ? 'Déjà un compte ? Se connecter' : "Pas encore de compte ? S'inscrire"}
+            {isSignUp
+              ? "DéjÃ  un compte ? Se connecter"
+              : "Pas encore de compte ? S'inscrire"}
           </button>
         </div>
       </div>
