@@ -171,3 +171,30 @@ export const getDashboardInsights = async (
     signal,
   );
 };
+
+type ScoreTenderInput = {
+  idWeb: string;
+  title: string;
+  buyer?: string;
+  procedureType?: string;
+  estimatedBudget?: number;
+  fullDescription?: string;
+  descriptors?: string[];
+  cpv?: string[];
+};
+
+type ScoreResponse = {
+  scores: { idWeb: string; score: number }[];
+};
+
+export const getAIScores = async (
+  tenders: ScoreTenderInput[],
+  profile: Pick<UserProfile, "companyName" | "specialization" | "cpvCodes" | "negativeKeywords">,
+  signal?: AbortSignal,
+): Promise<ScoreResponse> => {
+  return postJson<ScoreResponse, { tenders: ScoreTenderInput[]; profile: typeof profile }>(
+    "/api/gemini/score",
+    { tenders, profile },
+    signal,
+  );
+};

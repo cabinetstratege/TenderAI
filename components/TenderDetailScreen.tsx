@@ -1,11 +1,12 @@
 ﻿"use client";
 
 /* eslint-disable react/no-unescaped-entities */
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { tenderService } from "../services/tenderService";
 import {
   chatWithTender,
   generateStrategicAnalysis,
+  getAIScores,
 } from "../services/geminiService";
 import { userService } from "../services/userService";
 import {
@@ -146,6 +147,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     null,
   );
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [aiScore, setAiScore] = useState<number | null>(null);
+  const [isAiScoreLoading, setIsAiScoreLoading] = useState(false);
+  const aiScoreAbortRef = useRef<AbortController | null>(null);
+  const aiScoreRefreshRequestedRef = useRef(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const shareMenuRef = useRef<HTMLDivElement>(null);
@@ -200,6 +205,88 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const requestAiScore = useCallback(
+    (forceRefresh: boolean) => {
+      if (!data?.tender || !userProfile) return;
+
+      const cached = forceRefresh
+        ? null
+        : tenderService.getCachedAIScore(userProfile.id, data.tender.idWeb);
+      if (cached !== null) {
+        setAiScore(cached);
+        return;
+      }
+
+      aiScoreAbortRef.current?.abort();
+      const controller = new AbortController();
+      aiScoreAbortRef.current = controller;
+      setIsAiScoreLoading(true);
+
+      const tender = data.tender;
+      const payload = [
+        {
+          idWeb: tender.idWeb,
+          title: tender.title,
+          buyer: tender.buyer,
+          procedureType: tender.procedureType,
+          estimatedBudget: tender.estimatedBudget,
+          fullDescription: tender.fullDescription,
+          descriptors: tender.descriptors,
+          cpv: tender.lots?.flatMap((l) => l.cpv || []) || [],
+        },
+      ];
+
+      getAIScores(
+        payload,
+        {
+          companyName: userProfile.companyName,
+          specialization: userProfile.specialization,
+          cpvCodes: userProfile.cpvCodes,
+          negativeKeywords: userProfile.negativeKeywords,
+        },
+        controller.signal,
+      )
+        .then((res) => {
+          const score = res.scores.find((s) => s.idWeb === tender.idWeb)?.score;
+          if (typeof score === "number" && !Number.isNaN(score)) {
+            setAiScore(score);
+            tenderService.setCachedAIScore(userProfile.id, tender.idWeb, score);
+            if (forceRefresh && aiScoreRefreshRequestedRef.current) {
+              setToast({ type: "success", message: "Score mis à jour." });
+            }
+          }
+        })
+        .catch((e) => {
+          if (e?.name === "AbortError") return;
+          console.error("AI score error", e);
+          if (forceRefresh && aiScoreRefreshRequestedRef.current) {
+            setToast({ type: "error", message: "Erreur lors du recalcul du score." });
+          }
+        })
+        .finally(() => {
+          if (forceRefresh) {
+            aiScoreRefreshRequestedRef.current = false;
+            if (toastTimeoutRef.current) {
+              window.clearTimeout(toastTimeoutRef.current);
+            }
+            toastTimeoutRef.current = window.setTimeout(() => {
+              setToast(null);
+            }, 2500);
+          }
+          setIsAiScoreLoading(false);
+        });
+    },
+    [data?.tender, userProfile],
+  );
+
+  useEffect(() => {
+    if (!data?.tender || !userProfile) return;
+    requestAiScore(false);
+    return () => {
+      aiScoreAbortRef.current?.abort();
+    };
+  }, [data?.tender, userProfile, requestAiScore]);
 
   const handleGenerateStrategy = async (forceRefresh: boolean = false) => {
     if (!data?.tender || !userProfile) return;
@@ -396,6 +483,14 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     }
   };
 
+  const handleRefreshScore = () => {
+    if (!data?.tender || !userProfile) return;
+    aiScoreRefreshRequestedRef.current = true;
+    tenderService.clearCachedAIScores(userProfile.id, [data.tender.idWeb]);
+    setAiScore(null);
+    requestAiScore(true);
+  };
+
   const handleExportPDF = () => {
     if (!data?.tender) return;
     generateTenderReport(
@@ -444,6 +539,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     .map((d) => d.trim())
     .filter(Boolean);
   const targetDeptSet = new Set(targetDepartments);
+  const displayedScore = typeof aiScore === "number" ? aiScore : data.tender.compatibilityScore;
 
   return (
     <div className="pb-12">
@@ -542,6 +638,18 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                 </div>
                 <div className="hidden sm:flex items-center gap-2 text-xs">
                   <button
+                    onClick={handleRefreshScore}
+                    className="px-2.5 py-1.5 font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-[0.98]"
+                    disabled={isAiScoreLoading}
+                  >
+                    {isAiScoreLoading ? (
+                      <Loader2 className="animate-spin" size={12} />
+                    ) : (
+                      <RotateCcw size={12} />
+                    )}
+                    Actualiser
+                  </button>
+                  <button
                     onClick={handleExportPDF}
                     className="px-2.5 py-1.5 font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center gap-2 cursor-pointer"
                   >
@@ -573,14 +681,14 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                     </span>
                     <span
                       className={`px-2.5 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wide ${
-                        data.tender.compatibilityScore < 30
+                        displayedScore < 30
                           ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/40"
-                          : data.tender.compatibilityScore < 60
+                          : displayedScore < 60
                             ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40"
                             : "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40"
                       }`}
                     >
-                      Compatibilité : {data.tender.compatibilityScore}%
+                      Compatibilité : {displayedScore}%
                     </span>
                     {data.tender.estimatedBudget && (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-200 text-[11px] font-semibold uppercase tracking-wide dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40">

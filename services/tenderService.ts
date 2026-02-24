@@ -19,9 +19,10 @@ const BOAMP_API_URL =
   "https://boamp-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/boamp/records";
 const STORAGE_TENDERS_CACHE_KEY = "tenderai_tenders_cache_v2";
 const STORAGE_VISITED_KEY = "tenderai_visited_ids";
+const STORAGE_AI_SCORE_PREFIX = "tenderai_ai_scores_v1_";
 
 /**
- * GénÃ¨re un résumé intelligent (Smart Snippet) basé sur les mots-clés du profil.
+ * Génère un résumé intelligent (Smart Snippet) basé sur les mots-clés du profil.
  */
 const generateSmartSummary = (
   title: string,
@@ -198,6 +199,75 @@ const saveToTendersCache = (tender: Tender) => {
   }
 };
 
+const getAIScoreStorageKey = (userId: string) =>
+  `${STORAGE_AI_SCORE_PREFIX}${userId}`;
+
+const readAIScoreMap = (userId: string): Record<string, number> => {
+  try {
+    const raw = localStorage.getItem(getAIScoreStorageKey(userId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeAIScoreMap = (userId: string, map: Record<string, number>) => {
+  try {
+    localStorage.setItem(getAIScoreStorageKey(userId), JSON.stringify(map));
+  } catch (e) {
+    console.error("AI score cache save failed", e);
+  }
+};
+
+const getCachedAIScore = (userId: string, idWeb: string): number | null => {
+  if (!userId || !idWeb) return null;
+  const map = readAIScoreMap(userId);
+  const value = map[idWeb];
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
+};
+
+const getCachedAIScores = (
+  userId: string,
+  ids: string[],
+): Record<string, number> => {
+  if (!userId || ids.length === 0) return {};
+  const map = readAIScoreMap(userId);
+  const result: Record<string, number> = {};
+  ids.forEach((idWeb) => {
+    const value = map[idWeb];
+    if (typeof value === "number" && !Number.isNaN(value)) {
+      result[idWeb] = value;
+    }
+  });
+  return result;
+};
+
+const setCachedAIScore = (userId: string, idWeb: string, score: number) => {
+  if (!userId || !idWeb || Number.isNaN(score)) return;
+  const map = readAIScoreMap(userId);
+  map[idWeb] = score;
+  writeAIScoreMap(userId, map);
+};
+
+const clearCachedAIScores = (userId: string, ids?: string[]) => {
+  if (!userId) return;
+  if (!ids || ids.length === 0) {
+    try {
+      localStorage.removeItem(getAIScoreStorageKey(userId));
+    } catch (e) {
+      console.error("AI score cache clear failed", e);
+    }
+    return;
+  }
+  const map = readAIScoreMap(userId);
+  ids.forEach((idWeb) => {
+    delete map[idWeb];
+  });
+  writeAIScoreMap(userId, map);
+};
+
 // --- SUPABASE HELPERS ---
 const fetchUserInteractions = async (): Promise<UserInteraction[]> => {
   // FALLBACK: If user is "demo-user", return mock interactions
@@ -255,7 +325,7 @@ const mapRecordToTender = (record: any, user: UserProfile): Tender => {
   const rawDescription = descriptionParts.filter(Boolean).join(" ");
 
   const rawBudget = details.OBJET?.CARACTERISTIQUES?.QUANTITE || "";
-  const budgetMatch = rawBudget.match(/(\d[\d\s]*)(?:â‚¬|euros)/i);
+  const budgetMatch = rawBudget.match(/(\d[\d\s]*)(?:€|euros)/i);
   const estimatedBudget = budgetMatch
     ? parseInt(budgetMatch[1].replace(/\s/g, ""))
     : undefined;
@@ -325,6 +395,10 @@ const mapRecordToTender = (record: any, user: UserProfile): Tender => {
 };
 
 export const tenderService = {
+  getCachedAIScore,
+  getCachedAIScores,
+  setCachedAIScore,
+  clearCachedAIScores,
   getAuthorizedTenders: async (
     user: UserProfile,
     offset: number = 0,
