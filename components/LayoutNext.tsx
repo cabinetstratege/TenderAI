@@ -186,7 +186,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
           )}
         </nav>
 
-        <div className="mt-auto pt-4 border-t border-border sidebar-gradient">
+        <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 sidebar-gradient">
           <div className="flex justify-between items-center px-6 mb-4">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               Alertes
@@ -200,7 +200,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
               className={`flex items-center gap-3 p-3 rounded-xl transition-all group border ${
                 pathname === "/settings"
                   ? "bg-surface"
-                  : "hover:bg-surface/50 border-transparent hover:border-border"
+                  : "hover:bg-surface/50 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
               }`}
               style={{
                 borderColor:
@@ -229,7 +229,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 w-full glass z-50 flex items-center justify-between p-4 border-b border-border shadow-sm">
+      <div className="md:hidden fixed top-0 w-full glass z-50 flex items-center justify_between p-4 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
             <Compass className="text-white" size={18} />
@@ -288,7 +288,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
             <div onClick={() => setIsMobileMenuOpen(false)}>
               <NavItem href="/pricing" icon={CreditCard} label="Abonnement" />
             </div>
-            <div className="my-4 border-t border-border"></div>
+            <div className="my-4 border-t border-slate-200 dark:border-slate-800"></div>
             <div onClick={() => setIsMobileMenuOpen(false)}>
               <NavItem href="/settings" icon={Settings} label="Paramètres" />
             </div>

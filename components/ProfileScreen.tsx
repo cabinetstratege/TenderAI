@@ -138,8 +138,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
+          <div className="bg-surface p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-slate-700">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
                 <Building2 size={24} />
               </div>
@@ -235,8 +235,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
         </div>
 
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
+          <div className="bg-surface p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-slate-700">
               <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-lg">
                 <Wrench size={24} />
               </div>
@@ -299,8 +299,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
             </div>
           </div>
 
-          <div className="bg-surface p-6 rounded-xl shadow-lg border border-border space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-border">
+          <div className="bg-surface p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-slate-700">
               <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
                 <MapPin size={24} />
               </div>

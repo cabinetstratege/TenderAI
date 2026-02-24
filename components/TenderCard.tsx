@@ -62,8 +62,8 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
   return (
     <div className={`bg-surface rounded-2xl border transition-all duration-300 flex flex-col h-full group relative overflow-hidden ${
         isVisited 
-        ? 'opacity-80 grayscale-[0.2] border-border hover:opacity-100 hover:grayscale-0' 
-        : 'border-border/60 hover:border-primary/30 dark:hover:border-blue-500/30 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10'
+        ? 'opacity-80 grayscale-[0.2] border-slate-200 dark:border-slate-700 hover:opacity-100 hover:grayscale-0'
+        : 'border-slate-200 dark:border-slate-700 hover:border-primary/30 dark:hover:border-blue-500/30 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10'
     } hover:-translate-y-1`}>
       
       {/* Top Gradient Line on Hover */}
@@ -157,7 +157,7 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
         </div>
       </div>
 
-      <div className="p-4 border-t border-border bg-[color:var(--color-surface-highlight)] dark:bg-[color:var(--color-surface)] space-y-3 relative z-10">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-[color:var(--color-surface-highlight)] dark:bg-[color:var(--color-surface)] space-y-3 relative z-10">
         {/* Main Action: Link to Internal Detail (Funnel) */}
         <button
           type="button"

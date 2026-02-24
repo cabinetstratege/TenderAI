@@ -185,7 +185,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-surface p-6 rounded-2xl shadow-lg border border-border">
+            <div className="lg:col-span-2 bg-surface p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
               <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                 <TrendingUp className="text-blue-400" size={20} /> Dynamique des Opportunités
               </h3>
@@ -208,7 +208,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
               </div>
             </div>
 
-            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border flex flex-col">
+            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col">
               <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
                 <Filter className="text-purple-400" size={20} /> Entonnoir
               </h3>
@@ -249,7 +249,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border">
+            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
               <h4 className="font-bold text-white mb-6 flex items-center gap-2">
                 <Swords className="text-red-400" size={18} /> Top Concurrents (Fréquence)
               </h4>
@@ -283,7 +283,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
               </div>
             </div>
 
-            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-border flex flex-col">
+            <div className="bg-surface p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col">
               <h4 className="font-bold text-white mb-6 flex items-center gap-2">
                 <Wallet className="text-green-400" size={18} /> Parts de Marché (Volume Financier)
               </h4>
@@ -310,7 +310,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({ onNavigateTender }) => {
 };
 
 const KPICard = ({ title, value, icon: Icon, color, trend, trendColor }: any) => (
-  <div className="bg-surface p-5 rounded-2xl shadow-lg border border-border flex flex-col justify-between h-full relative overflow-hidden group hover:border-slate-600 transition-all">
+  <div className="bg-surface p-5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-between h-full relative overflow-hidden group hover:border-slate-600 transition-all">
     <div className="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-125 transition-transform duration-500"></div>
 
     <div className="flex justify-between items-start mb-3 relative z-10">

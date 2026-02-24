@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Tender, UserProfile, AIStrategyAnalysis } from "../types";
 
@@ -8,9 +7,10 @@ const MODEL_NAME = "gemini-2.5-flash";
 export const checkApiHealth = async (): Promise<boolean> => {
   try {
     // 1. Check if key exists in env
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
-    if (!apiKey || apiKey.includes("AIza") === false) { // Basic format check
-       return false;
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
+    if (!apiKey || apiKey.includes("AIza") === false) {
+      // Basic format check
+      return false;
     }
 
     // 2. Perform a minimal real request to check validity
@@ -19,7 +19,7 @@ export const checkApiHealth = async (): Promise<boolean> => {
       model: "gemini-2.5-flash",
       contents: "Ping",
     });
-    
+
     return true;
   } catch (error) {
     console.error("Gemini Health Check Failed:", error);
@@ -27,9 +27,12 @@ export const checkApiHealth = async (): Promise<boolean> => {
   }
 };
 
-export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfile): Promise<string> => {
+export const analyzeTenderWithGemini = async (
+  tender: Tender,
+  profile: UserProfile,
+): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
     if (!apiKey) {
       return "Clé API manquante. Impossible d'analyser.";
     }
@@ -43,7 +46,7 @@ export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfi
       ID BOAMP: ${tender.idWeb}
       Titre: ${tender.title}
       Description Complète: ${tender.fullDescription || tender.aiSummary}
-      Descripteurs: ${tender.descriptors.join(', ')}
+      Descripteurs: ${tender.descriptors.join(", ")}
       Acheteur: ${tender.buyer}
 
       Pour l'entreprise suivante :
@@ -71,15 +74,17 @@ export const analyzeTenderWithGemini = async (tender: Tender, profile: UserProfi
   }
 };
 
-export const suggestCPVCodes = async (specialization: string): Promise<string[]> => {
+export const suggestCPVCodes = async (
+  specialization: string,
+): Promise<string[]> => {
   try {
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
     if (!apiKey) {
       return ["45000000 (Exemple - Clé API manquante)"];
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    
+
     const prompt = `
       Tu es un expert en marchés publics.
       L'entreprise a la spécialisation suivante : "${specialization}".
@@ -94,28 +99,32 @@ export const suggestCPVCodes = async (specialization: string): Promise<string[]>
     });
 
     const text = response.text || "[]";
-    const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    try {
-        const codes = JSON.parse(cleanedText);
-        return Array.isArray(codes) ? codes : [];
-    } catch (e) {
-        return text.match(/\d{8}/g) || [];
-    }
+    const cleanedText = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
 
+    try {
+      const codes = JSON.parse(cleanedText);
+      return Array.isArray(codes) ? codes : [];
+    } catch (e) {
+      return text.match(/\d{8}/g) || [];
+    }
   } catch (error) {
     console.error("Gemini CPV Error:", error);
     return ["Erreur génération CPV"];
   }
 };
 
-export const generateProfileSuggestions = async (specialization: string): Promise<{ cpvCodes: string, negativeKeywords: string }> => {
+export const generateProfileSuggestions = async (
+  specialization: string,
+): Promise<{ cpvCodes: string; negativeKeywords: string }> => {
   try {
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
     if (!apiKey) {
-      return { 
-          cpvCodes: "45000000, 72000000", 
-          negativeKeywords: "hors sujet, maintenance basique" 
+      return {
+        cpvCodes: "45000000, 72000000",
+        negativeKeywords: "hors sujet, maintenance basique",
       };
     }
 
@@ -139,21 +148,23 @@ export const generateProfileSuggestions = async (specialization: string): Promis
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
-      config: { responseMimeType: "application/json" }
+      config: { responseMimeType: "application/json" },
     });
 
     const text = response.text || "{}";
     return JSON.parse(text);
-
   } catch (error) {
     console.error("Gemini Profile Suggestion Error:", error);
     return { cpvCodes: "", negativeKeywords: "" };
   }
 };
 
-export const generateStrategicAnalysis = async (tender: Tender, profile: UserProfile): Promise<AIStrategyAnalysis | null> => {
+export const generateStrategicAnalysis = async (
+  tender: Tender,
+  profile: UserProfile,
+): Promise<AIStrategyAnalysis | null> => {
   try {
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
     if (!apiKey) return null;
 
     const ai = new GoogleGenAI({ apiKey });
@@ -181,31 +192,35 @@ export const generateStrategicAnalysis = async (tender: Tender, profile: UserPro
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: prompt,
-      config: { responseMimeType: "application/json" }
+      config: { responseMimeType: "application/json" },
     });
 
     const text = response.text || "{}";
     return JSON.parse(text);
-
   } catch (error) {
     console.error("Gemini Strategy Error:", error);
     return null;
   }
 };
 
-export const chatWithTender = async (tender: Tender, history: {role: string, parts: {text: string}[]}[], message: string, profile?: UserProfile): Promise<string> => {
-   try {
-    const apiKey = process.env.API_KEY || process?.env?.API_KEY;
+export const chatWithTender = async (
+  tender: Tender,
+  history: { role: string; parts: { text: string }[] }[],
+  message: string,
+  profile?: UserProfile,
+): Promise<string> => {
+  try {
+    const apiKey = process.env.GEMINI_KEY || process?.env?.GEMINI_KEY;
     if (!apiKey) return "Erreur: Clé API manquante ou mal configurée.";
 
     const ai = new GoogleGenAI({ apiKey });
-    
-    const companyContext = profile 
-        ? `Ton entreprise (le candidat) est "${profile.companyName}".
+
+    const companyContext = profile
+      ? `Ton entreprise (le candidat) est "${profile.companyName}".
            Activité: ${profile.specialization}.
-           Points forts/Certifications: ${profile.certifications || 'Non spécifié'}.
-           Adresse: ${profile.address || 'Non spécifié'}.`
-        : "Tu réponds au nom d'une entreprise candidate générique.";
+           Points forts/Certifications: ${profile.certifications || "Non spécifié"}.
+           Adresse: ${profile.address || "Non spécifié"}.`
+      : "Tu réponds au nom d'une entreprise candidate générique.";
 
     const systemInstruction = `
     Tu es TenderAI, un "Bid Manager" Senior.
@@ -225,26 +240,25 @@ export const chatWithTender = async (tender: Tender, history: {role: string, par
     1. **Formatage** : Utilise Markdown. Titres en gras (**Titre**), listes à puces.
     2. **Ton** : Professionnel, persuasif, mais sobre.
     3. **Personnalisation** : Remplis les champs avec les infos du profil.
-    4. **Signature** : Signe toujours "L'équipe de ${profile?.companyName || 'Candidat'}".
+    4. **Signature** : Signe toujours "L'équipe de ${profile?.companyName || "Candidat"}".
     `;
 
     const chat = ai.chats.create({
       model: MODEL_NAME,
-      config: { 
-          systemInstruction,
-          temperature: 0.7,
+      config: {
+        systemInstruction,
+        temperature: 0.7,
       },
-      history: history
+      history: history,
     });
 
     const result = await chat.sendMessage({ message });
     return result.text || "Je n'ai pas pu générer de réponse.";
-
-   } catch (error: any) {
-     console.error("Chat Error", error);
-     if (error.message?.includes('429')) {
-         return "⚠️ Trop de demandes. Veuillez patienter quelques secondes.";
-     }
-     return "⚠️ Une erreur technique est survenue.";
-   }
+  } catch (error: any) {
+    console.error("Chat Error", error);
+    if (error.message?.includes("429")) {
+      return "⚠️ Trop de demandes. Veuillez patienter quelques secondes.";
+    }
+    return "⚠️ Une erreur technique est survenue.";
+  }
 };

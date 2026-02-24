@@ -3,7 +3,7 @@ import React from 'react';
 
 const TenderSkeleton: React.FC = () => {
   return (
-    <div className="bg-surface rounded-xl shadow-lg border border-border p-5 flex flex-col h-full animate-pulse">
+    <div className="bg-surface rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-5 flex flex-col h-full animate-pulse">
       <div className="flex justify-between items-start mb-3">
         <div className="h-5 w-20 bg-slate-800 rounded-full"></div>
         <div className="h-4 w-16 bg-slate-800 rounded"></div>

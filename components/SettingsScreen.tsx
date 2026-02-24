@@ -77,7 +77,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
-      <div className="flex justify-between items-center border-b border-border pb-6">
+      <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-6">
         <div>
           <h2 className="text-2xl font-bold text-textMain">Paramètres</h2>
           <p className="text-textMuted text-sm mt-1">
@@ -90,7 +90,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <h3 className="text-lg font-bold text-textMain flex items-center gap-2">
           <Sun size={20} className="text-primary" /> Apparence
         </h3>
-        <div className="bg-surface rounded-xl border border-border p-1 flex gap-1 max-w-md">
+        <div className="bg-surface rounded-xl border border-slate-200 dark:border-slate-700 p-1 flex gap-1 max-w-md">
           <button
             onClick={() => toggleTheme("light")}
             className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
@@ -119,7 +119,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <Database size={20} className="text-primary" /> Système & Données
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-surface p-5 rounded-xl border border-border flex justify-between items-center">
+          <div className="bg-surface p-5 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <div className="flex gap-3 items-center">
               <div
                 className={`p-2 rounded-lg ${notifEnabled ? "bg-primary/10 text-primary" : "bg-slate-700/50 text-slate-500"}`}
@@ -146,7 +146,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </label>
           </div>
 
-          <div className="bg-surface p-5 rounded-xl border border-border flex justify-between items-center">
+          <div className="bg-surface p-5 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <div className="flex gap-3 items-center">
               <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
                 <Trash2 size={20} />
@@ -163,7 +163,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                 cacheCleared
                   ? "bg-green-500/10 text-green-500 border-green-500/30"
-                  : "bg-surfaceHighlight text-textMain border-border hover:bg-slate-700 hover:text-white"
+                  : "bg-surfaceHighlight text-textMain border-slate-200 dark:border-slate-700 hover:bg-slate-700 hover:text-white"
               }`}
             >
               {cacheCleared ? (
@@ -176,7 +176,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </button>
           </div>
 
-          <div className="bg-surface p-5 rounded-xl border border-border flex justify-between items-center md:col-span-2">
+          <div className="bg-surface p-5 rounded-xl border border-slate-200 dark:border-slate-700 flex justify-between items-center md:col-span-2">
             <div className="flex gap-3 items-center">
               <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
                 <Download size={20} />
@@ -192,7 +192,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
             <button
               onClick={handleExportData}
-              className="px-4 py-2 bg-surfaceHighlight border border-border rounded-lg text-sm font-medium text-textMain hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-surfaceHighlight border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-textMain hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-2"
             >
               <Download size={14} /> Exporter
             </button>
@@ -200,11 +200,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-      <section className="space-y-4 pt-4 border-t border-border">
+        <section className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={handleRestartTutorial}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-surface border border-border rounded-xl text-textMuted font-medium hover:text-primary hover:border-primary/50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-surface border border-slate-200 dark:border-slate-700 rounded-xl text-textMuted font-medium hover:text-primary hover:border-primary/50 transition-colors"
           >
             <PlayCircle size={18} /> Revoir le tutoriel
           </button>

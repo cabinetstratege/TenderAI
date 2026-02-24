@@ -25,7 +25,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
 
   return (
     <div
-      className="bg-surface p-4 rounded-xl border border-border shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all flex flex-col gap-3 group relative cursor-grab active:cursor-grabbing"
+      className="bg-surface p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all flex flex-col gap-3 group relative cursor-grab active:cursor-grabbing"
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('text/plain', item.tender.id);
@@ -76,7 +76,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
+      <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700 mt-auto">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -250,7 +250,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
         <h2 className="text-2xl font-bold text-textMain">Pipeline des Marchés</h2>
         <div className="flex gap-2">
           <RefreshButton onRefresh={refreshData} isLoading={isLoading} />
-          <div className="flex items-center gap-2 text-xs text-slate-500 bg-surface px-3 py-1.5 rounded-full border border-border">
+          <div className="flex items-center gap-2 text-xs text-slate-500 bg-surface px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
             <div className="w-2 h-2 rounded-full bg-blue-500"></div> Total: {data.length} dossiers
           </div>
         </div>
@@ -339,7 +339,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
 
       {editingNoteId && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+          <div className="bg-surface border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-textMain">Notes Internes</h3>
               <button onClick={() => setEditingNoteId(null)}>
@@ -347,7 +347,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
               </button>
             </div>
             <textarea
-              className="w-full h-32 bg-background border border-border rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none text-textMain placeholder-slate-500"
+              className="w-full h-32 bg-background border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none text-textMain placeholder-slate-500"
               placeholder="Avancement, questions à poser, stratégie de réponse..."
               value={currentNote}
               onChange={(e) => setCurrentNote(e.target.value)}

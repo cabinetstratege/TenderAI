@@ -17,6 +17,7 @@ import {
   UserProfile,
 } from "../types";
 import jsPDF from "jspdf";
+import { generateTenderReport } from "../services/pdfService";
 import DepartmentMap from "./DepartmentMap";
 import {
   ArrowLeft,
@@ -307,16 +308,12 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
 
   const handleExportPDF = () => {
     if (!data?.tender) return;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(data.tender.title, 10, 20);
-    doc.setFontSize(12);
-    doc.text(`Acheteur: ${data.tender.buyer}`, 10, 30);
-    doc.text(`Deadline: ${data.tender.deadline}`, 10, 40);
-    doc.text(`Lien: ${data.tender.linkDCE}`, 10, 50);
-    doc.text("Résumé:", 10, 60);
-    doc.text(doc.splitTextToSize(data.tender.aiSummary, 180), 10, 70);
-    doc.save(`AO-${data.tender.idWeb}.pdf`);
+    generateTenderReport(
+      data.tender,
+      analysis,
+      data.interaction?.internalNotes,
+      userProfile,
+    );
   };
 
   const handleClearChat = () => {
@@ -359,34 +356,20 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
 
   return (
     <div className="pb-12">
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-start gap-3 mb-6">
         <button
           onClick={() => (onBack ? onBack() : window.history.back())}
-          className="p-2 rounded-full bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+          className="p-2 mt-1 rounded-full bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
         >
           <ArrowLeft size={18} />
         </button>
-        <div>
-          <p className="text-xs text-slate-500 uppercase tracking-[0.2em] font-semibold">
-            AO #{data.tender.idWeb}
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-black text-textMain">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-xl sm:text-2xl font-black text-textMain leading-tight">
             {data.tender.title}
           </h1>
-        </div>
-        <div className="ml-auto flex gap-2">
-          <button
-            onClick={handleExportPDF}
-            className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-border"
-          >
-            <Printer size={14} className="inline mr-1" /> Exporter
-          </button>
-          <button
-            onClick={handleShare}
-            className="px-3 py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-blue-600"
-          >
-            <Share2 size={14} className="inline mr-1" /> Partager
-          </button>
+          <span className="text-[11px] uppercase tracking-[0.16em] font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md w-fit">
+            AO #{data.tender.idWeb}
+          </span>
         </div>
       </div>
 
@@ -455,7 +438,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                       Procédure : {data.tender.procedureType}
                     </span>
                     <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
-                      Score : {data.tender.compatibilityScore}%
+                      Compatibilité : {data.tender.compatibilityScore}%
                     </span>
                     {data.tender.estimatedBudget && (
                       <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1">
@@ -707,6 +690,24 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
         </div>
 
         <div className="space-y-4">
+          <div className="bg-surface border border-border rounded-2xl p-4 shadow-xl space-y-2">
+            <div className="text-sm font-semibold text-textMain">Actions</div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-2">
+              <button
+                onClick={handleExportPDF}
+                className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-border flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer size={14} /> Exporter
+              </button>
+              <button
+                onClick={handleShare}
+                className="px-3 py-2 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-blue-600 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Share2 size={14} /> Partager
+              </button>
+            </div>
+          </div>
+
           <div className="bg-surface border border-border rounded-2xl p-4 shadow-xl space-y-3">
             <div className="flex items-center gap-2 text-sm text-textMuted">
               <MapPin size={14} /> Géographie ciblée
@@ -724,13 +725,13 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={() => handleStatusChange(TenderStatus.SAVED)}
-                className="px-3 py-2 rounded-lg border border-border hover:bg-slate-100 dark:hover:bg-slate-800 text-textMain flex items-center gap-2"
+                className="px-3 py-2 rounded-lg border border-border hover:bg-slate-100 dark:hover:bg-slate-800 text-textMain flex items-center gap-2 cursor-pointer"
               >
                 <Save size={14} /> Sauvegarder
               </button>
               <button
                 onClick={() => handleStatusChange(TenderStatus.BLACKLISTED)}
-                className="px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                className="px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 cursor-pointer"
               >
                 <XCircle size={14} /> Blacklister
               </button>

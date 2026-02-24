@@ -60,7 +60,7 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface rounded-xl shadow-lg border border-border overflow-hidden">
+        <div className="lg:col-span-2 bg-surface rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="p-4 border-b border-border flex justify-between items-center">
             <h3 className="font-bold text-textMain flex items-center gap-2">
               <Users size={18} /> Gestion Utilisateurs
@@ -120,7 +120,7 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-surface p-6 rounded-xl shadow-lg border border-border">
+          <div className="bg-surface p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <h3 className="font-bold text-textMain mb-4 flex items-center gap-2">
               <Activity size={18} /> État du Système
             </h3>
@@ -158,7 +158,7 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
             </div>
           </div>
 
-          <div className="bg-surface p-6 rounded-xl shadow-lg border border-border">
+          <div className="bg-surface p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <h3 className="font-bold text-textMain mb-4 flex items-center gap-2">
               <Database size={18} /> Maintenance
             </h3>
