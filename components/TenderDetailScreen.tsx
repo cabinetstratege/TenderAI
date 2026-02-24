@@ -388,10 +388,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                 <div className="flex gap-2 text-sm font-semibold text-textMain">
                   <button
                     onClick={() => setActiveTab("description")}
-                    className={`px-3 py-1 rounded-lg transition-colors duration-150 cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg border transition-colors duration-150 cursor-pointer ${
                       activeTab === "description"
-                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                        : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "bg-primary/10 text-primary border-primary/30 ring-1 ring-primary/30"
+                        : "border-slate-200 dark:border-slate-700/50 text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                     aria-pressed={activeTab === "description"}
                     title="Voir la description"
@@ -400,10 +400,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                   </button>
                   <button
                     onClick={() => setActiveTab("lots")}
-                    className={`px-3 py-1 rounded-lg transition-colors duration-150 cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg border transition-colors duration-150 cursor-pointer ${
                       activeTab === "lots"
-                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                        : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
+                        ? "bg-primary/10 text-primary border-primary/30 ring-1 ring-primary/30"
+                        : "border-slate-200 dark:border-slate-700/50 text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                     aria-pressed={activeTab === "lots"}
                     title="Voir les lots"
@@ -525,8 +525,63 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-4">
+                <div className="p-3 border border-slate-200 dark:border-slate-700/50 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-amber-500" />
+                      <h4 className="font-bold text-textMain">Analyse IA</h4>
+                    </div>
+                    <button
+                      onClick={handleGenerateStrategy}
+                      disabled={isAnalyzing}
+                      className="px-3 py-1 text-[11px] bg-primary/10 text-primary rounded-full hover:bg-primary/20 flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {isAnalyzing ? (
+                        <Loader2 className="animate-spin" size={12} />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
+                      {analysis ? "Mettre à jour" : "Lancer"}
+                    </button>
+                  </div>
+
+                  {analysis ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <h5 className="font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-1 text-sm">
+                          <CheckCircle size={14} /> Atouts
+                        </h5>
+                        <ul className="list-disc pl-4 space-y-1 text-emerald-800 dark:text-emerald-100">
+                          {analysis.strengths.map((s, i) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <h5 className="font-bold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1 text-sm">
+                          <AlertTriangle size={14} /> Risques
+                        </h5>
+                        <ul className="list-disc pl-4 space-y-1 text-amber-800 dark:text-amber-100">
+                          {analysis.risks.map((r, i) => (
+                            <li key={i}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase">
+                          <Clock size={12} /> Charge : {analysis.workload}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-textMuted">
+                      Lancez l'analyse pour obtenir les risques et atouts.
+                    </p>
+                  )}
+                </div>
+
                 <div className="border border-slate-200 dark:border-slate-700/50 rounded-2xl p-3 bg-surface shadow-inner">
                   <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
                     {chatHistory.length === 0 && (
@@ -637,63 +692,6 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="p-3 border border-slate-200 dark:border-slate-700/50 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-amber-500" />
-                      <h4 className="font-bold text-textMain">Analyse IA</h4>
-                    </div>
-                    <button
-                      onClick={handleGenerateStrategy}
-                      disabled={isAnalyzing}
-                      className="px-3 py-1 text-[11px] bg-primary/10 text-primary rounded-full hover:bg-primary/20 flex items-center gap-1 disabled:opacity-50"
-                    >
-                      {isAnalyzing ? (
-                        <Loader2 className="animate-spin" size={12} />
-                      ) : (
-                        <Sparkles size={12} />
-                      )}
-                      {analysis ? "Mettre à jour" : "Lancer"}
-                    </button>
-                  </div>
-
-                  {analysis ? (
-                    <div className="space-y-3 text-sm">
-                      <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                        <h5 className="font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-1 text-sm">
-                          <CheckCircle size={14} /> Atouts
-                        </h5>
-                        <ul className="list-disc pl-4 space-y-1 text-emerald-800 dark:text-emerald-100">
-                          {analysis.strengths.map((s, i) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                        <h5 className="font-bold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1 text-sm">
-                          <AlertTriangle size={14} /> Risques
-                        </h5>
-                        <ul className="list-disc pl-4 space-y-1 text-amber-800 dark:text-amber-100">
-                          {analysis.risks.map((r, i) => (
-                            <li key={i}>{r}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-700/50">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase">
-                          <Clock size={12} /> Charge : {analysis.workload}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-textMuted">
-                      Lancez l'analyse pour obtenir les risques et atouts.
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
