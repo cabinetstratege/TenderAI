@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { userService } from '../services/userService';
+import { userService, SuperAdminUser, SuperAdminSummary } from '../services/userService';
 import { checkApiHealth } from '../services/geminiService';
-import { UserProfile } from '../types';
 import { ShieldCheck, Users, Search, Activity, Database, AlertTriangle, Loader2 } from 'lucide-react';
 
 type SuperAdminScreenProps = {
@@ -11,21 +10,37 @@ type SuperAdminScreenProps = {
 };
 
 const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<SuperAdminUser[]>([]);
+  const [summary, setSummary] = useState<SuperAdminSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const [geminiStatus, setGeminiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const loadData = async () => {
-      const allUsers = await userService.getAllProfiles();
-      setUsers(allUsers);
-      const isGeminiOk = await checkApiHealth();
-      setGeminiStatus(isGeminiOk ? 'online' : 'offline');
-      setLoading(false);
+      try {
+        const { users: allUsers, summary: agg } = await userService.getSuperAdminUsers(controller.signal);
+        setUsers(allUsers);
+        setSummary(agg);
+        const isGeminiOk = await checkApiHealth();
+        setGeminiStatus(isGeminiOk ? 'online' : 'offline');
+      } catch (e: unknown) {
+        const err = e as { name?: string; message?: string };
+        if (err?.name !== 'AbortError') {
+          setError(err?.message || 'Impossible de charger les données');
+        }
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadData();
+
+    return () => controller.abort();
   }, []);
 
   const filteredUsers = users.filter(
@@ -47,17 +62,31 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
         </div>
         <div className="flex gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{users.length}</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              {summary?.totalUsers ?? users.length}
+            </p>
             <p className="text-xs text-slate-500 uppercase">Utilisateurs</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-              {users.filter((u) => u.subscriptionStatus === 'Active').length}
+              {summary?.activeUsers ?? users.filter((u) => u.subscriptionStatus === 'Active').length}
             </p>
             <p className="text-xs text-slate-500 uppercase">Actifs</p>
           </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              {summary?.interactionsTotal ?? 0}
+            </p>
+            <p className="text-xs text-slate-500 uppercase">Interactions</p>
+          </div>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-surface rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -83,6 +112,7 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
                   <th className="px-4 py-3">ID / Entreprise</th>
                   <th className="px-4 py-3">Spécialisation</th>
                   <th className="px-4 py-3">Scope</th>
+                  <th className="px-4 py-3">Interactions</th>
                   <th className="px-4 py-3">Statut</th>
                 </tr>
               </thead>
@@ -98,8 +128,11 @@ const SuperAdminScreen: React.FC<SuperAdminScreenProps> = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span className="bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-xs text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-                        {user.scope}
+                        France
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                      {user.interactionsCount}
                     </td>
                     <td className="px-4 py-3">
                       <span

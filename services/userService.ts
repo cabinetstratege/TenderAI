@@ -4,6 +4,20 @@ import { UserProfile } from '../types';
 
 const DEMO_PROFILE_KEY = 'tenderai_demo_profile';
 
+export interface SuperAdminUser {
+    id: string;
+    companyName: string;
+    specialization: string;
+    subscriptionStatus: UserProfile['subscriptionStatus'];
+    interactionsCount: number;
+}
+
+export interface SuperAdminSummary {
+    totalUsers: number;
+    activeUsers: number;
+    interactionsTotal: number;
+}
+
 export const userService = {
     isDemoMode: (): boolean => {
         return localStorage.getItem('tenderai_auth_mode') === 'demo';
@@ -174,6 +188,28 @@ export const userService = {
         if (error) throw new Error(error.message || "Erreur de sauvegarde base de données");
     },
     
+    getSuperAdminUsers: async (signal?: AbortSignal): Promise<{ users: SuperAdminUser[]; summary: SuperAdminSummary }> => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.access_token) {
+            throw new Error("Non authentifié");
+        }
+
+        const res = await fetch('/api/super-admin/users', {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${session.access_token}`
+            },
+            signal
+        });
+
+        if (!res.ok) {
+            const message = await res.text();
+            throw new Error(message || "Échec de la récupération admin");
+        }
+
+        return res.json();
+    },
+
     // New Method to Simulate Payment
     upgradeSubscription: async (): Promise<void> => {
         if (userService.isDemoMode()) {
