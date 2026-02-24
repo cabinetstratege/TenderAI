@@ -1,41 +1,25 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { userService } from "../services/userService";
 import { tenderService } from "../services/tenderService";
 import {
   LogOut,
   Download,
   Database,
-  Shield,
-  PlayCircle,
-  Moon,
-  Sun,
   Bell,
   BellOff,
   Trash2,
   CheckCircle,
-  RefreshCcw,
 } from "lucide-react";
 
 type SettingsScreenProps = {
   onLogout?: () => void;
-  onRestartTutorial?: () => void;
 };
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({
-  onLogout,
-  onRestartTutorial,
-}) => {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onLogout }) => {
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [cacheCleared, setCacheCleared] = useState(false);
-
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("tenderai_theme");
-    if (storedTheme === "light") setTheme("light");
-    else setTheme("dark");
-  }, []);
 
   const handleLogout = async () => {
     await userService.resetLocalUser();
@@ -44,24 +28,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleExportData = async () => {
     await tenderService.exportUserData();
-  };
-
-  const handleRestartTutorial = () => {
-    localStorage.setItem("tenderai_show_tutorial", "true");
-    onRestartTutorial?.();
-    window.location.reload();
-  };
-
-  const toggleTheme = (newTheme: "dark" | "light") => {
-    setTheme(newTheme);
-    const root = window.document.documentElement;
-    if (newTheme === "dark") {
-      root.classList.add("dark");
-      localStorage.setItem("tenderai_theme", "dark");
-    } else {
-      root.classList.remove("dark");
-      localStorage.setItem("tenderai_theme", "light");
-    }
   };
 
   const handleClearCache = () => {
@@ -85,34 +51,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </p>
         </div>
       </div>
-
-      <section className="space-y-4">
-        <h3 className="text-lg font-bold text-textMain flex items-center gap-2">
-          <Sun size={20} className="text-primary" /> Apparence
-        </h3>
-        <div className="bg-surface rounded-xl border border-slate-200 dark:border-slate-700 p-1 flex gap-1 max-w-md">
-          <button
-            onClick={() => toggleTheme("light")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              theme === "light"
-                ? "bg-white text-slate-900 shadow-sm border border-slate-200"
-                : "text-textMuted hover:text-textMain"
-            }`}
-          >
-            <Sun size={16} /> Mode Clair
-          </button>
-          <button
-            onClick={() => toggleTheme("dark")}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-              theme === "dark"
-                ? "bg-slate-700 text-white shadow-sm"
-                : "text-textMuted hover:text-textMain"
-            }`}
-          >
-            <Moon size={16} /> Mode Sombre
-          </button>
-        </div>
-      </section>
 
       <section className="space-y-4">
         <h3 className="text-lg font-bold text-textMain flex items-center gap-2">
@@ -154,7 +92,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div>
                 <h4 className="font-bold text-textMain text-sm">Cache Local</h4>
                 <p className="text-xs text-textMuted">
-                  Forcer la mise à jour des AO.
+                  Forcer la mise à  jour des AO.
                 </p>
               </div>
             </div>
@@ -200,15 +138,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </section>
 
-        <section className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={handleRestartTutorial}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-surface border border-slate-200 dark:border-slate-700 rounded-xl text-textMuted font-medium hover:text-primary hover:border-primary/50 transition-colors"
-          >
-            <PlayCircle size={18} /> Revoir le tutoriel
-          </button>
-
+      <section className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="grid grid-cols-1 gap-4">
           <button
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-500/5 border border-red-500/20 rounded-xl text-red-500 font-medium hover:bg-red-500/10 transition-colors"

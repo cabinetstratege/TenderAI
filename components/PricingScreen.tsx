@@ -98,9 +98,7 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
       }
     } catch (err) {
       console.error("Portal error", err);
-      setError(
-        "Impossible d'ouvrir la gestion d'abonnement pour le moment.",
-      );
+      setError("Impossible d'ouvrir la gestion d'abonnement pour le moment.");
     } finally {
       setPortalLoading(false);
     }
@@ -176,15 +174,15 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
                   >
                     <Check size={18} /> Abonnement actif
                   </button>
-              <button
-                onClick={handleManageSubscription}
-                disabled={portalLoading}
-                className="w-full text-sm font-semibold py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors cursor-pointer"
-              >
-                {portalLoading ? (
-                  <Loader2 className="animate-spin" size={16} />
-                ) : (
-                  "Gerer l'abonnement"
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={portalLoading}
+                    className="w-full text-sm font-semibold py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  >
+                    {portalLoading ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      "Gerer l'abonnement"
                     )}
                   </button>
                 </div>
@@ -227,13 +225,13 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
           <TestimonialCard
             name="Marc D."
             role="Directeur BTP"
-            text="GrÃ¢ce au score de compatibilité, nous ne perdons plus de temps Ã  lire des DCE inutiles. J'ai gagné 2 marchés en 1 mois."
+            text="Grà¢ce au score de compatibilité, nous ne perdons plus de temps à  lire des DCE inutiles. J'ai gagné 2 marchés en 1 mois."
             stars={5}
           />
           <TestimonialCard
             name="Sophie L."
             role="Gérante (Nettoyage)"
-            text="L'assistant IA pour rédiger le mémoire technique est bluffant. Il me mÃ¢che 80% du travail d'écriture."
+            text="L'assistant IA pour rédiger le mémoire technique est bluffant. Il me mâche 80% du travail d'écriture."
             stars={5}
           />
           <TestimonialCard
@@ -253,7 +251,7 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
         <div className="space-y-4">
           <FAQItem
             question="Y a-t-il un engagement de durée ?"
-            answer="Non, aucune ! Vous Ãªtes libre d'arrÃªter votre abonnement Ã  tout moment d'un simple clic depuis votre espace. Le mois en cours reste dÃ», mais aucun prélèvement suivant ne sera effectué."
+            answer="Non, aucune ! Vous àªtes libre d'arrêter votre abonnement à  tout moment d'un simple clic depuis votre espace. Le mois en cours reste dà», mais aucun prélèvement suivant ne sera effectué."
           />
           <FAQItem
             question="Comment fonctionne le score de compatibilité ?"
@@ -261,11 +259,11 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
           />
           <FAQItem
             question="Puis-je changer mon périmètre géographique ?"
-            answer="Oui, absolument. Vous pouvez basculer entre France entière, Europe ou une sélection précise de départements Ã  tout moment dans l'onglet Profil, sans surcoÃ»t."
+            answer="Oui, absolument. Vous pouvez basculer entre France entière, Europe ou une sélection précise de départements à  tout moment dans l'onglet Profil, sans surcoà»t."
           />
           <FAQItem
             question="Mes données sont-elles sécurisées ?"
-            answer="Oui. Nous utilisons le chiffrement SSL pour toutes les communications. Vos données de profil ne sont jamais revendues Ã  des tiers et servent uniquement Ã  calibrer l'algorithme pour votre usage."
+            answer="Oui. Nous utilisons le chiffrement SSL pour toutes les communications. Vos données de profil ne sont jamais revendues à  des tiers et servent uniquement à  calibrer l'algorithme pour votre usage."
           />
         </div>
       </div>
@@ -278,7 +276,7 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
           </h3>
           <p className="text-slate-600 dark:text-slate-400 text-sm max-w-md">
             Notre équipe est basée en France et répond généralement sous
-            quelques heures. N'hésitez pas Ã  nous solliciter pour une démo ou
+            quelques heures. N'hésitez pas à  nous solliciter pour une démo ou
             une question technique.
           </p>
         </div>
@@ -363,4 +361,3 @@ const FAQItem: React.FC<{ question: string; answer: string }> = ({
 };
 
 export default PricingScreen;
-

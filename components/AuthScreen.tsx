@@ -44,7 +44,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           onAuthenticated?.();
         } else if (data.user && !data.session) {
           setSuccessMsg(
-            "Compte créé avec succÃ¨s ! Veuillez vérifier votre email pour confirmer.",
+            "Compte créé avec succès ! Veuillez vérifier votre email pour confirmer.",
           );
           setLoading(false);
           return;
@@ -118,7 +118,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           <p className="text-slate-500 dark:text-slate-400 text-sm">
             {isSignUp
               ? "Créez votre compte pour démarrer votre essai gratuit de 24h."
-              : "Connectez-vous Ã  votre espace de veille."}
+              : "Connectez-vous à  votre espace de veille."}
           </p>
         </div>
 
@@ -234,7 +234,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition-all"
           >
             {isSignUp
-              ? "DéjÃ  un compte ? Se connecter"
+              ? "Déjà  un compte ? Se connecter"
               : "Pas encore de compte ? S'inscrire"}
           </button>
         </div>

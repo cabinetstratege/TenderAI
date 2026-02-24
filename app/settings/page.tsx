@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
   return (
     <LayoutNext>
-      <SettingsScreen onLogout={() => router.push('/auth')} onRestartTutorial={() => router.push('/')} />
+      <SettingsScreen onLogout={() => router.push('/auth')} />
     </LayoutNext>
   );
 }
