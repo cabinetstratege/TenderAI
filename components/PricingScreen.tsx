@@ -176,15 +176,15 @@ const PricingScreen: React.FC<PricingScreenProps> = ({ onSubscribed }) => {
                   >
                     <Check size={18} /> Abonnement actif
                   </button>
-                  <button
-                    onClick={handleManageSubscription}
-                    disabled={portalLoading}
-                    className="w-full text-sm font-semibold py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors"
-                  >
-                    {portalLoading ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      "Gerer l'abonnement"
+              <button
+                onClick={handleManageSubscription}
+                disabled={portalLoading}
+                className="w-full text-sm font-semibold py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                {portalLoading ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  "Gerer l'abonnement"
                     )}
                   </button>
                 </div>

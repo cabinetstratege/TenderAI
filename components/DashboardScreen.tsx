@@ -312,7 +312,7 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setShowAdvancedModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium text-textMain hover:bg-surfaceHighlight transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-medium text-textMain hover:bg-surfaceHighlight transition-colors cursor-pointer"
             >
               <SlidersHorizontal size={16} />
               Filtres avancés

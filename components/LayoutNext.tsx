@@ -309,7 +309,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
                 setIsMobileMenuOpen(false);
                 handleLogout();
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 mt-6 border border-transparent hover:border-red-200 dark:hover:border-red-900/30"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-slate-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 dark:hover:text-red-400 mt-6 border border-transparent hover:border-red-200 dark:hover:border-red-900/30 cursor-pointer"
             >
               <LogOut size={20} />
               <span className="font-medium">Déconnexion</span>
