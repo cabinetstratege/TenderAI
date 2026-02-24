@@ -1,13 +1,32 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import Providers from './providers';
+import type { Metadata } from "next";
+import "./globals.css";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: 'TenderAI',
-  description: 'Le Compagnon des Marchés Publics',
+  title: "Le Compagnon des Marchés Publics",
+  description: "Le Compagnon des Marchés Publics",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon0.svg", type: "image/svg+xml" },
+      { url: "/icon1.png", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [{ url: "/apple-icon.png" }],
+  },
+  appleWebApp: {
+    title: "Le Compagnon des Marchés Publics",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr" className="dark">
       <body>
