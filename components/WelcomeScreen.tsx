@@ -97,7 +97,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
       <button
         onClick={handleNext}
         disabled={!formData.companyName}
-        className="w-full py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+        className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
       >
         Suivant <ArrowRight size={18} />
       </button>
@@ -127,7 +127,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
           <button
             onClick={handleAiGeneration}
             disabled={!formData.specialization || isGenerating}
-            className="w-full py-4 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/50 dark:to-indigo-900/50 border border-purple-200 dark:border-purple-500/30 text-purple-700 dark:text-purple-200 rounded-xl font-bold hover:bg-purple-200 dark:hover:bg-purple-900/80 flex items-center justify-center gap-2 transition-all"
+            className="w-full py-4 bg-purple-600 border border-purple-700 text-white rounded-xl font-bold hover:bg-purple-700 flex items-center justify-center gap-2 transition-all"
           >
             {isGenerating ? <Loader2 className="animate-spin" /> : <Sparkles size={18} className="text-purple-500 dark:text-purple-400" />}
             {isGenerating ? 'Analyse en cours...' : 'Générer mes mots-clés & CPV'}
@@ -163,7 +163,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
       <button
         onClick={handleNext}
         disabled={!formData.cpvCodes}
-        className="w-full py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+        className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
       >
         Continuer <ArrowRight size={18} />
       </button>
@@ -184,8 +184,8 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
             onClick={() => setFormData({ ...formData, scope: s as any })}
             className={`p-6 rounded-2xl border-2 text-center transition-all ${
               formData.scope === s
-                ? 'border-primary bg-primary/10 text-primary dark:text-white font-bold shadow-lg shadow-blue-900/20'
-                : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                ? 'border-primary bg-primary text-white font-bold shadow-lg shadow-blue-900/20'
+                : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
             }`}
           >
             {s}
@@ -207,9 +207,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
 
       <button
         onClick={handleFinish}
-        className="w-full py-3.5 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2"
+        className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2"
       >
-        Lancer le Compagnon <Check size={18} />
+        Accéder aux marchés <Check size={18} />
       </button>
     </div>
   );
