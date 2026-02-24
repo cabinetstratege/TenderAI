@@ -8,7 +8,7 @@ interface DepartmentMapProps {
   departments: string[]; // List of department codes (e.g. ['75', '33'])
 }
 
-const GEOJSON_SOURCE = "https://france-geojson.gregoiredavid.fr/repo/departements.geojson";
+const GEOJSON_SOURCE = "/api/geojson";
 // Next.js exposes client env vars when prefixed with NEXT_PUBLIC_
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_PUBLIC_KEY;
 const MAP_STYLE = "mapbox://styles/colinjamier/cmj647vzs002u01qudiep8rnx";
