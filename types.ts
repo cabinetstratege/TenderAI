@@ -96,6 +96,7 @@ export interface Tender {
   // AI Extracted/Calculated
   aiSummary: string;
   compatibilityScore: number;
+  matchCount?: number;
   estimatedBudget?: number; // Extracted by AI
   
   fullDescription?: string; 

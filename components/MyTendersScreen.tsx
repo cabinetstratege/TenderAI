@@ -22,6 +22,7 @@ interface KanbanCardProps {
 
 const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange, onNavigateTender, onDragStart, onDragEnd, disableClick }) => {
   const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const isDeadlineValid = Number.isFinite(daysRemaining);
 
   return (
     <div
@@ -42,7 +43,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
     >
       <div className="flex justify-between items-start">
         <span className="text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-900 px-1.5 py-0.5 rounded">{item.tender.idWeb}</span>
-        {daysRemaining < 5 ? (
+        {isDeadlineValid && (daysRemaining < 0 ? (
+          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-800">
+            Expiré
+          </span>
+        ) : daysRemaining < 5 ? (
           <span className="text-[10px] font-bold text-red-500 dark:text-red-400 flex items-center gap-1 bg-red-100 dark:bg-red-950/30 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-900/50">
             <AlertCircle size={10} /> J-{daysRemaining}
           </span>
@@ -50,7 +55,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
           <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/50">
             J-{daysRemaining}
           </span>
-        )}
+        ))}
       </div>
 
       <button

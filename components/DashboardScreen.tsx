@@ -1,9 +1,10 @@
 "use client";
 
 /* eslint-disable react/no-unescaped-entities */
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { tenderService } from '../services/tenderService';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { tenderService, calculateLocalScore } from '../services/tenderService';
 import { userService } from '../services/userService';
+import { getDashboardInsights } from '../services/geminiService';
 import TenderCard from './TenderCard';
 import TenderSkeleton from './TenderSkeleton';
 import RefreshButton from './RefreshButton';
@@ -58,6 +59,11 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
     totalBudget: 0,
     avgScore: 0,
   });
+  const [insights, setInsights] = useState<{ summary: string; top3: { idWeb: string; reason: string }[] } | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const insightsAbortRef = useRef<AbortController | null>(null);
+  const insightsCacheRef = useRef<{ key: string; data: { summary: string; top3: { idWeb: string; reason: string }[] } } | null>(null);
 
   // Load visited status on mount
   useEffect(() => {
@@ -146,6 +152,72 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
     fetchTenders,
   ]);
 
+  const buildInsightsPayload = useCallback(() => {
+    if (!userProfile) return null;
+    const base = authorizedTenders.slice(0, 12).map((t) => ({
+      idWeb: t.idWeb,
+      title: t.title,
+      buyer: t.buyer,
+      procedureType: t.procedureType,
+      compatibilityScore: t.compatibilityScore,
+      estimatedBudget: t.estimatedBudget,
+      aiSummary: (t.aiSummary || '').slice(0, 240),
+    }));
+    return {
+      tenders: base,
+      profile: {
+        companyName: userProfile.companyName,
+        specialization: userProfile.specialization,
+        negativeKeywords: userProfile.negativeKeywords,
+      },
+    };
+  }, [authorizedTenders, userProfile]);
+
+  const makeInsightsKey = useCallback((payload: ReturnType<typeof buildInsightsPayload>) => {
+    if (!payload) return '';
+    const ids = payload.tenders.map((t) => t.idWeb).join(',');
+    const prof = `${payload.profile.companyName}|${payload.profile.specialization}|${payload.profile.negativeKeywords}`;
+    return `${ids}::${prof}`;
+  }, []);
+
+  const loadInsights = useCallback(async () => {
+    const payload = buildInsightsPayload();
+    if (!payload || payload.tenders.length === 0) return;
+
+    const key = makeInsightsKey(payload);
+    if (insightsCacheRef.current?.key === key) {
+      setInsights(insightsCacheRef.current.data);
+      return;
+    }
+
+    insightsAbortRef.current?.abort();
+    const controller = new AbortController();
+    insightsAbortRef.current = controller;
+
+    setInsightsLoading(true);
+    setInsightsError(null);
+    try {
+      const data = await getDashboardInsights(payload.tenders, payload.profile, controller.signal);
+      const safeData = {
+        summary: data?.summary || '',
+        top3: Array.isArray(data?.top3) ? data.top3.slice(0, 3) : [],
+      };
+      insightsCacheRef.current = { key, data: safeData };
+      setInsights(safeData);
+    } catch (e: any) {
+      setInsightsError(e?.message || 'Erreur IA');
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, [buildInsightsPayload, makeInsightsKey]);
+
+  useEffect(() => {
+    loadInsights();
+    return () => {
+      insightsAbortRef.current?.abort();
+    };
+  }, [loadInsights]);
+
   // Load saved filters on mount
   useEffect(() => {
     if (userProfile && userProfile.savedDashboardFilters) {
@@ -195,8 +267,26 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
   };
 
   // Client-side filtering for things API can't handle well (like our calculated Score or Budget specific range)
+  const scoredTenders = useMemo(() => {
+    if (!userProfile) return authorizedTenders;
+    return authorizedTenders.map((t) => {
+      const text = `${t.title} ${t.fullDescription || ''} ${t.descriptors?.join(' ') || ''}`;
+      const lotCpvs = t.lots?.flatMap((l) => l.cpv || []) || [];
+      const { score, matchCount } = calculateLocalScore(text, userProfile, lotCpvs);
+      if (score === t.compatibilityScore && matchCount === t.matchCount) return t;
+      return { ...t, compatibilityScore: score, matchCount };
+    });
+  }, [authorizedTenders, userProfile]);
+
   const displayedTenders = useMemo(() => {
-    return authorizedTenders.filter((t) => {
+    const today = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const todayIso = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+    return scoredTenders.filter((t) => {
+      if (t.deadline && /^\d{4}-\d{2}-\d{2}$/.test(t.deadline)) {
+        if (t.deadline < todayIso) return false;
+      }
       // Min Score (Calculated locally, so must allow filtering locally)
       if (t.compatibilityScore < filters.minScore) return false;
 
@@ -207,7 +297,7 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
 
       return true;
     });
-  }, [authorizedTenders, filters.minScore, filters.minBudget]);
+  }, [scoredTenders, filters.minScore, filters.minBudget]);
 
   if (!userProfile) return null;
 
@@ -493,8 +583,15 @@ const DashboardScreen: React.FC<DashboardProps> = ({ userProfile, onOpenTender }
               : 'Vos filtres locaux (Score/Budget) sont trop restrictifs sur les résultats retournés.'}
           </p>
           <button
+            type="button"
+            onClick={() => (window.location.href = '/profile')}
+            className="mt-6 mx-auto max-w-md text-xs text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            Complétez votre profil entreprise (spécialisation, CPV, mots-clés négatifs) pour augmenter vos chances d'avoir des matchs pertinents.
+          </button>
+          <button
             onClick={handleResetFilters}
-            className="mt-6 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium shadow-lg"
+            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium shadow-lg"
           >
             Réinitialiser tous les filtres
           </button>

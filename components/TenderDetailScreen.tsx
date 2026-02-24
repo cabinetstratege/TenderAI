@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /* eslint-disable react/no-unescaped-entities */
 import React, { useState, useEffect, useRef } from "react";
@@ -237,7 +237,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
       message,
       userProfile,
     );
-    const newHistory: ChatMessage[] = [...updatedHistory, { role: "model", text: response }];
+    const newHistory: ChatMessage[] = [
+      ...updatedHistory,
+      { role: "model", text: response },
+    ];
 
     setChatHistory(newHistory);
     setIsChatting(false);
@@ -260,7 +263,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
         ? {
             ...prev,
             interaction: {
-              ...(prev.interaction ?? { tenderId: prev.tender.id, status: TenderStatus.SAVED }),
+              ...(prev.interaction ?? {
+                tenderId: prev.tender.id,
+                status: TenderStatus.SAVED,
+              }),
               internalNotes: note,
             },
           }
@@ -374,8 +380,8 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-surface border border-border rounded-2xl shadow-xl overflow-hidden">
+        <div className="lg:col-span-2 space-y-6 order-1 lg:order-1">
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl shadow-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Layers size={16} className="text-primary" />
@@ -410,7 +416,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                       activeTab === "intelligence"
                         ? "bg-primary/10 text-primary ring-1 ring-primary/30"
                         : "text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
-                    }`}
+                    } hidden`}
                     aria-pressed={activeTab === "intelligence"}
                     title="Voir l'intelligence"
                   >
@@ -433,16 +439,25 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                   <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
                     {data.tender.aiSummary}
                   </div>
-                  <div className="flex flex-wrap gap-3 text-xs">
-                    <span className="px-2 py-1 bg-primary/10 text-primary rounded-full">
-                      Procédure : {data.tender.procedureType}
+                  <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full border border-slate-200 dark:border-slate-700 font-semibold uppercase tracking-wide">
+                      Procédure • {data.tender.procedureType}
                     </span>
-                    <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                    <span
+                      className={`px-2.5 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wide ${
+                        data.tender.compatibilityScore < 30
+                          ? "bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-300 dark:border-red-900/40"
+                          : data.tender.compatibilityScore < 60
+                            ? "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40"
+                            : "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-900/40"
+                      }`}
+                    >
                       Compatibilité : {data.tender.compatibilityScore}%
                     </span>
                     {data.tender.estimatedBudget && (
-                      <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1">
-                        <Euro size={12} /> {data.tender.estimatedBudget.toLocaleString("fr-FR")} €
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-200 text-[11px] font-semibold uppercase tracking-wide dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/40">
+                        <Euro size={12} />{" "}
+                        {data.tender.estimatedBudget.toLocaleString("fr-FR")} €
                       </span>
                     )}
                   </div>
@@ -460,16 +475,18 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
               {activeTab === "lots" && (
                 <div className="space-y-3">
                   {data.tender.lots.length === 0 && (
-                    <p className="text-sm text-textMuted">Aucun lot disponible.</p>
+                    <p className="text-sm text-textMuted">
+                      Aucun lot disponible.
+                    </p>
                   )}
                   {data.tender.lots.map((lot) => (
                     <div
                       key={lot.lotNumber}
-                      className="p-3 border border-border rounded-xl bg-slate-50 dark:bg-slate-900/30"
+                      className="p-3 border border-slate-200 dark:border-slate-700/50 rounded-2xl bg-slate-50 dark:bg-slate-900/30"
                     >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-bold text-textMain">
-                          Lot {lot.lotNumber} — {lot.title}
+                          Lot {lot.lotNumber} â€” {lot.title}
                         </div>
                         {lot.cpv && (
                           <span className="text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">
@@ -478,224 +495,229 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                         )}
                       </div>
                       {lot.description && (
-                        <p className="text-xs text-textMuted mt-1">{lot.description}</p>
+                        <p className="text-xs text-textMuted mt-1">
+                          {lot.description}
+                        </p>
                       )}
                     </div>
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <BrainCircuit size={18} className="text-primary" />
+                <h3 className="font-bold text-textMain">Intelligence</h3>
+              </div>
+              <button
+                onClick={handleGenerateStrategy}
+                disabled={isAnalyzing || !userProfile}
+                className="px-3 py-2 text-xs bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                Générer une analyse
+              </button>
+            </div>
 
-              {activeTab === "intelligence" && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="lg:col-span-2 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BrainCircuit size={18} className="text-primary" />
-                        <h3 className="font-bold text-textMain">Assistant Stratégique</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 space-y-4">
+                <div className="border border-slate-200 dark:border-slate-700/50 rounded-2xl p-3 bg-surface shadow-inner">
+                  <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                    {chatHistory.length === 0 && (
+                      <div className="text-sm text-textMuted text-center py-6">
+                        Posez une question ou lancez un prompt pré-rempli.
                       </div>
-                      <button
-                        onClick={handleGenerateStrategy}
-                        disabled={isAnalyzing || !userProfile}
-                        className="px-3 py-2 text-xs bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-2"
+                    )}
+                    {chatHistory.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        {isAnalyzing ? (
-                          <Loader2 className="animate-spin" size={14} />
-                        ) : (
-                          <Sparkles size={14} />
-                        )}
-                        Générer une analyse
+                        <div
+                          className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm shadow-sm ${
+                            msg.role === "user"
+                              ? "bg-primary text-white rounded-br-none"
+                              : "bg-slate-100 dark:bg-slate-800 text-textMain rounded-bl-none"
+                          }`}
+                        >
+                          <FormattedMessage text={msg.text} role={msg.role} />
+                        </div>
+                      </div>
+                    ))}
+                    {isChatting && (
+                      <div className="flex justify-start">
+                        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-3 py-2 text-sm text-textMuted">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                            <span
+                              className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                              style={{ animationDelay: "120ms" }}
+                            />
+                            <span
+                              className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                              style={{ animationDelay: "240ms" }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          handleChatSend(
+                            "Rédige une synthèse exécutive de notre réponse pour le décideur (Maire/Directeur).",
+                          )
+                        }
+                        disabled={isChatting}
+                        className="px-3 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-textMain flex items-center gap-2"
+                      >
+                        <Sparkles size={14} /> Synthèse
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleChatSend(
+                            "Propose un plan détaillé pour le Mémoire Technique de cet AO, structuré en grands chapitres.",
+                          )
+                        }
+                        disabled={isChatting}
+                        className="px-3 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-textMain flex items-center gap-2"
+                      >
+                        <BrainCircuit size={14} /> Plan mémoire
                       </button>
                     </div>
 
-                    {/* Chat */}
-                    <div className="border border-border rounded-xl p-3 bg-surface shadow-inner">
-                      <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
-                        {chatHistory.length === 0 && (
-                          <div className="text-sm text-textMuted text-center py-6">
-                            Posez une question ou lancez un prompt pré-rempli.
-                          </div>
-                        )}
-                        {chatHistory.map((msg, idx) => (
-                          <div
-                            key={idx}
-                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                          >
-                            <div
-                              className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm shadow-sm ${
-                                msg.role === "user"
-                                  ? "bg-primary text-white rounded-br-none"
-                                  : "bg-slate-100 dark:bg-slate-800 text-textMain rounded-bl-none"
-                              }`}
-                            >
-                              <FormattedMessage text={msg.text} role={msg.role} />
-                            </div>
-                          </div>
-                        ))}
-                        {isChatting && (
-                          <div className="flex justify-start">
-                            <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl px-3 py-2 text-sm text-textMuted">
-                              <div className="flex gap-1">
-                                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                                <span
-                                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                                  style={{ animationDelay: "120ms" }}
-                                />
-                                <span
-                                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                                  style={{ animationDelay: "240ms" }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        <div ref={chatEndRef} />
-                      </div>
-
-                      <div className="mt-3 space-y-2">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              handleChatSend(
-                                "Rédige une synthèse exécutive de notre réponse pour le décideur (Maire/Directeur).",
-                              )
-                            }
-                            disabled={isChatting}
-                            className="px-3 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-border rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-textMain flex items-center gap-2"
-                          >
-                            <Sparkles size={14} /> Synthèse
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleChatSend(
-                                "Propose un plan détaillé pour le Mémoire Technique de cet AO, structuré en grands chapitres.",
-                              )
-                            }
-                            disabled={isChatting}
-                            className="px-3 py-2 text-xs bg-slate-100 dark:bg-slate-900 border border-border rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-textMain flex items-center gap-2"
-                          >
-                            <BrainCircuit size={14} /> Plan mémoire
-                          </button>
-                        </div>
-
-                        <div className="relative">
-                          <textarea
-                            className="w-full pl-3 pr-12 py-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-slate-400 disabled:opacity-50"
-                            rows={3}
-                            placeholder="Posez une question ou demandez une modification..."
-                            value={chatInput}
-                            onChange={(e) => setChatInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleChatSend();
-                              }
-                            }}
-                            disabled={isChatting}
-                          />
-                          <button
-                            onClick={() => handleChatSend()}
-                            disabled={!chatInput.trim() || isChatting}
-                            className="absolute right-2 bottom-2 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                          >
-                            <Send size={16} />
-                          </button>
-                        </div>
-
-                        {chatHistory.length > 0 && (
-                          <div className="flex justify-end gap-3 text-[11px] text-slate-500">
-                            <button
-                              onClick={handleExportChatPDF}
-                              className="hover:text-primary flex items-center gap-1"
-                            >
-                              <Download size={12} /> Export PDF
-                            </button>
-                            <button
-                              onClick={handleClearChat}
-                              className="hover:text-red-500 flex items-center gap-1"
-                            >
-                              <Trash2 size={12} /> Effacer
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                    <div className="relative">
+                      <textarea
+                        className="w-full pl-3 pr-12 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain placeholder-slate-400 disabled:opacity-50"
+                        rows={3}
+                        placeholder="Posez une question ou demandez une modification..."
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleChatSend();
+                          }
+                        }}
+                        disabled={isChatting}
+                      />
+                      <button
+                        onClick={() => handleChatSend()}
+                        disabled={!chatInput.trim() || isChatting}
+                        className="absolute right-2 bottom-2 p-2 bg-primary text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                      >
+                        <Send size={16} />
+                      </button>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="p-3 border border-border rounded-xl bg-slate-50 dark:bg-slate-900/30">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <Sparkles size={16} className="text-amber-500" />
-                          <h4 className="font-bold text-textMain">Analyse IA</h4>
-                        </div>
+                    {chatHistory.length > 0 && (
+                      <div className="flex justify-end gap-3 text-[11px] text-slate-500">
                         <button
-                          onClick={handleGenerateStrategy}
-                          disabled={isAnalyzing}
-                          className="px-3 py-1 text-[11px] bg-primary/10 text-primary rounded-full hover:bg-primary/20 flex items-center gap-1 disabled:opacity-50"
+                          onClick={handleExportChatPDF}
+                          className="hover:text-primary flex items-center gap-1"
                         >
-                          {isAnalyzing ? <Loader2 className="animate-spin" size={12} /> : <Sparkles size={12} />}
-                          {analysis ? "Mettre à jour" : "Lancer"}
+                          <Download size={12} /> Export PDF
+                        </button>
+                        <button
+                          onClick={handleClearChat}
+                          className="hover:text-red-500 flex items-center gap-1"
+                        >
+                          <Trash2 size={12} /> Effacer
                         </button>
                       </div>
-
-                      {analysis ? (
-                        <div className="space-y-3 text-sm">
-                          <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800">
-                            <h5 className="font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-1 text-sm">
-                              <CheckCircle size={14} /> Atouts
-                            </h5>
-                            <ul className="list-disc pl-4 space-y-1 text-emerald-800 dark:text-emerald-100">
-                              {analysis.strengths.map((s, i) => (
-                                <li key={i}>{s}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800">
-                            <h5 className="font-bold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1 text-sm">
-                              <AlertTriangle size={14} /> Risques
-                            </h5>
-                            <ul className="list-disc pl-4 space-y-1 text-amber-800 dark:text-amber-100">
-                              {analysis.risks.map((r, i) => (
-                                <li key={i}>{r}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-border">
-                            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase">
-                              <Clock size={12} /> Charge : {analysis.workload}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-textMuted">Lancez l'analyse pour obtenir les risques et atouts.</p>
-                      )}
-                    </div>
-
-                    <div className="p-3 border border-border rounded-xl bg-slate-50 dark:bg-slate-900/30 space-y-2">
-                      <h4 className="font-bold text-textMain flex items-center gap-2 text-sm">
-                        <StickyNote size={14} /> Notes internes
-                      </h4>
-                      <textarea
-                        className="w-full bg-white dark:bg-slate-900 border border-border rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain min-h-[100px]"
-                        placeholder="Ajoutez vos éléments clés..."
-                        value={data.interaction?.internalNotes || ""}
-                        onChange={(e) => handleSaveNotes(e.target.value)}
-                      />
-                    </div>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-3 border border-slate-200 dark:border-slate-700/50 rounded-2xl bg-slate-50 dark:bg-slate-900/30">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-amber-500" />
+                      <h4 className="font-bold text-textMain">Analyse IA</h4>
+                    </div>
+                    <button
+                      onClick={handleGenerateStrategy}
+                      disabled={isAnalyzing}
+                      className="px-3 py-1 text-[11px] bg-primary/10 text-primary rounded-full hover:bg-primary/20 flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {isAnalyzing ? (
+                        <Loader2 className="animate-spin" size={12} />
+                      ) : (
+                        <Sparkles size={12} />
+                      )}
+                      {analysis ? "Mettre à jour" : "Lancer"}
+                    </button>
+                  </div>
+
+                  {analysis ? (
+                    <div className="space-y-3 text-sm">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <h5 className="font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-1 text-sm">
+                          <CheckCircle size={14} /> Atouts
+                        </h5>
+                        <ul className="list-disc pl-4 space-y-1 text-emerald-800 dark:text-emerald-100">
+                          {analysis.strengths.map((s, i) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <h5 className="font-bold text-amber-700 dark:text-amber-300 mb-2 flex items-center gap-1 text-sm">
+                          <AlertTriangle size={14} /> Risques
+                        </h5>
+                        <ul className="list-disc pl-4 space-y-1 text-amber-800 dark:text-amber-100">
+                          {analysis.risks.map((r, i) => (
+                            <li key={i}>{r}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="p-3 bg-slate-100 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase">
+                          <Clock size={12} /> Charge : {analysis.workload}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-textMuted">
+                      Lancez l'analyse pour obtenir les risques et atouts.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
+          </div>
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl space-y-3">
+            <div className="flex items-center gap-2 text-sm text-textMuted">
+              <StickyNote size={14} /> Notes internes
+            </div>
+            <textarea
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-textMain min-h-[120px]"
+              placeholder="Ajoutez vos éléments clés..."
+              value={data.interaction?.internalNotes || ""}
+              onChange={(e) => handleSaveNotes(e.target.value)}
+            />
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-surface border border-border rounded-2xl p-4 shadow-xl space-y-2">
+        <div className="space-y-4 order-2 lg:order-2">
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl space-y-2">
             <div className="text-sm font-semibold text-textMain">Actions</div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-2">
               <button
                 onClick={handleExportPDF}
-                className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-border flex items-center justify-center gap-2 cursor-pointer"
+                className="px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Printer size={14} /> Exporter
               </button>
@@ -708,30 +730,31 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-2xl p-4 shadow-xl space-y-3">
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl space-y-3">
             <div className="flex items-center gap-2 text-sm text-textMuted">
               <MapPin size={14} /> Géographie ciblée
             </div>
             <DepartmentMap departments={data.tender.departments} />
             <div className="text-xs text-textMuted flex items-center gap-2">
-              <User size={12} /> Client principal : {userProfile?.companyName || "—"}
+              <User size={12} /> Client principal :{" "}
+              {userProfile?.companyName || "â€”"}
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-2xl p-4 shadow-xl space-y-3">
+          <div className="bg-surface border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl space-y-3">
             <div className="flex items-center gap-2 text-sm text-textMuted">
               <CalendarPlus size={14} /> Suivi
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={() => handleStatusChange(TenderStatus.SAVED)}
-                className="px-3 py-2 rounded-lg border border-border hover:bg-slate-100 dark:hover:bg-slate-800 text-textMain flex items-center gap-2 cursor-pointer"
+                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-textMain flex items-center gap-2 cursor-pointer"
               >
                 <Save size={14} /> Sauvegarder
               </button>
               <button
                 onClick={() => handleStatusChange(TenderStatus.BLACKLISTED)}
-                className="px-3 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 cursor-pointer"
+                className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700/50 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 cursor-pointer"
               >
                 <XCircle size={14} /> Blacklister
               </button>
