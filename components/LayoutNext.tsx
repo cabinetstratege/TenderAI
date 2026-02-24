@@ -96,7 +96,10 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   const isBlocking =
-    isTrialExpired && pathname !== "/pricing" && pathname !== "/settings";
+    !isSuperAdmin &&
+    isTrialExpired &&
+    pathname !== "/pricing" &&
+    pathname !== "/settings";
 
   return (
     <div className="flex h-screen bg-background text-textMain overflow-hidden relative selection:bg-indigo-500/30">

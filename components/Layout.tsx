@@ -70,7 +70,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   // Allowed paths even when expired (Pricing to pay, Settings to logout)
-  const isBlocking = isTrialExpired && location.pathname !== '/pricing' && location.pathname !== '/settings';
+  const isBlocking =
+    !isSuperAdmin &&
+    isTrialExpired &&
+    location.pathname !== '/pricing' &&
+    location.pathname !== '/settings';
 
   return (
     <div className="flex h-screen bg-background text-textMain overflow-hidden relative selection:bg-indigo-500/30">

@@ -37,6 +37,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+          },
         });
         if (error) throw error;
 
