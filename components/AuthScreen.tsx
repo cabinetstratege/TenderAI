@@ -104,7 +104,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
 
       <div className="max-w-md w-full bg-white/80 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 p-8 space-y-8 relative z-10">
         <div className="text-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40 mx-auto transform rotate-3 hover:rotate-6 transition-transform">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40 mx-auto transition-transform">
             <Compass className="text-white" size={32} />
           </div>
           <div>
@@ -149,6 +149,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                 <input
                   type="email"
                   required
+                  autoComplete="email"
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition-all"
                   placeholder="nom@entreprise.com"
                   value={email}
@@ -170,8 +171,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
                   type="password"
                   required
                   minLength={6}
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition-all"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="**********"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
