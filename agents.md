@@ -52,6 +52,7 @@ For every task, the agent must:
 - Use utility functions when possible.
 - Avoid redundant role derivation logic.
 - Avoid using ANY as a TypeScript type.
+- Do not leave temporary files in the repository.
 
 ### Performance
 
@@ -95,3 +96,12 @@ For every task, the agent must:
 - Optimize touch interactions for mobile devices.
 - Add contextual help with tooltips.
 - Make error messages clear, specific, and actionable.
+
+### UI Feedback (Mandatory DoD)
+
+For every UI change involving an interactive element (buttons, links, inputs, menus, dialogs), the agent must:
+
+- Enumerate touched interactive elements.
+- Ensure and verify states: hover (incl. cursor), focus-visible, active/pressed, disabled, loading, success, error.
+- Ensure keyboard navigation works (tab order, Enter/Space triggers, focus management).
+- Reuse existing Button/Spinner/Toast/Tooltip patterns before creating new ones.

@@ -36,7 +36,7 @@ export default function Home() {
     <LayoutNext>
       <DashboardScreen
         userProfile={profile}
-        onOpenTender={(id) => router.push(`/tender/${id}`)}
+        onOpenTender={(id) => router.push(`/opportunites/${id}`)}
       />
     </LayoutNext>
   );

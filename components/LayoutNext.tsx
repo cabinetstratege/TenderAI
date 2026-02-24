@@ -147,9 +147,9 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
             id="tour-sidebar-dashboard"
           />
           <NavItem
-            href="/my-tenders"
+            href="/mes-opportunites"
             icon={Briefcase}
-            label="Mes Appels d'Offres"
+            label="Mes Opportunités"
             id="tour-sidebar-tenders"
           />
           <NavItem href="/stats" icon={BarChart2} label="Statistiques" />
@@ -270,7 +270,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div onClick={() => setIsMobileMenuOpen(false)}>
               <NavItem
-                href="/my-tenders"
+            href="/mes-opportunites"
                 icon={Briefcase}
                 label="Mes Appels d'Offres"
               />

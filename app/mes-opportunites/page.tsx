@@ -31,7 +31,9 @@ export default function MyTendersPage() {
 
   return (
     <LayoutNext>
-      <MyTendersScreen onNavigateTender={(id) => router.push(`/tender/${id}`)} />
+      <MyTendersScreen
+        onNavigateTender={(id) => router.push(`/opportunites/${id}`)}
+      />
     </LayoutNext>
   );
 }

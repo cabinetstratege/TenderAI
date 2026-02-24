@@ -31,7 +31,7 @@ export default function StatsPage() {
 
   return (
     <LayoutNext>
-      <StatsScreen onNavigateTender={(id) => router.push(`/tender/${id}`)} />
+      <StatsScreen onNavigateTender={(id) => router.push(`/opportunites/${id}`)} />
     </LayoutNext>
   );
 }

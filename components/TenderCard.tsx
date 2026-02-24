@@ -40,10 +40,10 @@ const TenderCard: React.FC<TenderCardProps> = ({ tender, userProfile, onStatusCh
       e.preventDefault();
       let shareUrl = "";
       try {
-        shareUrl = window.location.origin + `/#/tender/${tender.id}`;
+        shareUrl = window.location.origin + `/#/opportunites/${tender.id}`;
       } catch (err) {
         // Fallback for sandboxed environments where origin access might fail
-        shareUrl = `/#/tender/${tender.id}`;
+        shareUrl = `/#/opportunites/${tender.id}`;
       }
 
       const shareData = {

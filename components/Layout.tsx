@@ -109,7 +109,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         <nav className="flex-1 space-y-1.5 px-4 mt-2">
           <NavItem to="/" icon={LayoutDashboard} label="Tableau de bord" id="tour-sidebar-dashboard" />
-          <NavItem to="/my-tenders" icon={Briefcase} label="Mes Appels d'Offres" id="tour-sidebar-tenders" />
+          <NavItem to="/mes-opportunites" icon={Briefcase} label="Mes Opportunités" id="tour-sidebar-tenders" />
           <NavItem to="/stats" icon={BarChart2} label="Statistiques" />
           <NavItem to="/profile" icon={Building2} label="Profil Entreprise" id="tour-sidebar-profile" />
           <NavItem to="/pricing" icon={CreditCard} label="Abonnement" className={isTrialExpired ? 'animate-pulse text-primary font-bold' : ''} />
@@ -191,7 +191,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
            )}
            <nav className="space-y-3">
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/" icon={LayoutDashboard} label="Tableau de bord" /></div>
-            <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/my-tenders" icon={Briefcase} label="Mes Appels d'Offres" /></div>
+            <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/mes-opportunites" icon={Briefcase} label="Mes Opportunités" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/stats" icon={BarChart2} label="Statistiques" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/profile" icon={Building2} label="Profil Entreprise" /></div>
             <div onClick={() => setIsMobileMenuOpen(false)}><NavItem to="/pricing" icon={CreditCard} label="Abonnement" /></div>
