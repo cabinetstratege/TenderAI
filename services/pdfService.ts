@@ -208,7 +208,7 @@ export const generateTenderReport = (
   doc.setTextColor(50, 50, 50);
   const summary = tender.aiSummary || tender.fullDescription || 'Résumé indisponible.';
   const summaryLines = doc.splitTextToSize(summary, pageWidth - margin * 2);
-  summaryLines.forEach((line) => {
+  summaryLines.forEach((line: string) => {
     y = ensureSpace(doc, y, margin);
     doc.text(line, margin, y);
     y += 6;
@@ -287,7 +287,7 @@ export const generateTenderReport = (
   doc.setTextColor(50, 50, 50);
   const notesText = notes?.trim() ? notes : 'Aucune note interne.';
   const noteLines = doc.splitTextToSize(notesText, pageWidth - margin * 2);
-  noteLines.forEach((line) => {
+  noteLines.forEach((line: string) => {
     y = ensureSpace(doc, y, margin);
     doc.text(line, margin, y);
     y += 6;
