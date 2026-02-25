@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
 
     const prompt = `
       Tu es un directeur commercial expert en B2B.
@@ -69,3 +69,4 @@ export async function POST(req: Request) {
     return NextResponse.json<StrategyResponse>({ analysis: null });
   }
 }
+

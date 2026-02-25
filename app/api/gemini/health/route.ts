@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
     await ai.models.generateContent({
       model: MODEL_NAME,
       contents: "Ping",
@@ -25,3 +25,4 @@ export async function GET() {
     return NextResponse.json<HealthResponse>({ ok: false });
   }
 }
+

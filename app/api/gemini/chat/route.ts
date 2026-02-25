@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
 
     const companyContext = profile
       ? `Ton entreprise (le candidat) est "${profile.companyName}".
@@ -87,3 +87,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Erreur technique" }, { status: 500 });
   }
 }
+

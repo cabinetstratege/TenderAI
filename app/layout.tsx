@@ -5,6 +5,10 @@ import Providers from "./providers";
 export const metadata: Metadata = {
   title: "Le Compagnon des Marchés Publics",
   description: "Le Compagnon des Marchés Publics",
+  robots: {
+    index: false,
+    follow: false,
+  },
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -36,3 +40,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
 
     const mini = tenders.slice(0, 20).map((t) => ({
       idWeb: t.idWeb,
@@ -107,3 +107,4 @@ ${JSON.stringify(mini)}
     return NextResponse.json<ScoreResponse>({ scores: [] }, { status: 200 });
   }
 }
+

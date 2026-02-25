@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
 
     const prompt = `
       Tu es un expert en marchés publics.
@@ -63,3 +63,4 @@ export async function POST(req: Request) {
     return NextResponse.json<CPVResponse>({ codes: ["Erreur génération CPV"] });
   }
 }
+

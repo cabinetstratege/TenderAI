@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey, httpOptions: { baseUrl: "https://generativelanguage.googleapis.com" } });
 
     const prompt = `
       Tu es un consultant en stratégie de marchés publics.
@@ -69,3 +69,4 @@ export async function POST(req: Request) {
     });
   }
 }
+
