@@ -138,7 +138,7 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         mapboxAccessToken={MAPBOX_TOKEN}
         attributionControl={false}
         renderWorldCopies={false}
-        projection="mercator"
+        projection={{ name: "mercator" }}
         scrollZoom={false} // Prevent scrolling interfering with page scroll
         maxBounds={[[-6.5, 41.0], [10.5, 52.0]]}
         onLoad={() => setIsMapLoaded(true)}
