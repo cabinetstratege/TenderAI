@@ -137,7 +137,10 @@ const DepartmentMap: React.FC<DepartmentMapProps> = ({ departments }) => {
         mapStyle={MAP_STYLE}
         mapboxAccessToken={MAPBOX_TOKEN}
         attributionControl={false}
+        renderWorldCopies={false}
+        projection="mercator"
         scrollZoom={false} // Prevent scrolling interfering with page scroll
+        maxBounds={[[-6.5, 41.0], [10.5, 52.0]]}
         onLoad={() => setIsMapLoaded(true)}
         onError={(e) => {
             console.error("Mapbox Error Event:", e);

@@ -135,7 +135,9 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     undefined,
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisCooldownUntil, setAnalysisCooldownUntil] = useState<number | null>(null);
+  const [analysisCooldownUntil, setAnalysisCooldownUntil] = useState<
+    number | null
+  >(null);
   const analysisCooldownRef = useRef<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -146,7 +148,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
   const [copiedMessageIndex, setCopiedMessageIndex] = useState<number | null>(
     null,
   );
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
   const [aiScore, setAiScore] = useState<number | null>(null);
   const [isAiScoreLoading, setIsAiScoreLoading] = useState(false);
   const aiScoreAbortRef = useRef<AbortController | null>(null);
@@ -261,7 +266,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
           if (e?.name === "AbortError") return;
           console.error("AI score error", e);
           if (forceRefresh && aiScoreRefreshRequestedRef.current) {
-            setToast({ type: "error", message: "Erreur lors du recalcul du score." });
+            setToast({
+              type: "error",
+              message: "Erreur lors du recalcul du score.",
+            });
           }
         })
         .finally(() => {
@@ -308,9 +316,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
         );
         setToast({
           type: "success",
-          message: forceRefresh
-            ? "Analyse mise à jour."
-            : "Analyse générée.",
+          message: forceRefresh ? "Analyse mise à jour." : "Analyse générée.",
         });
         if (forceRefresh) {
           const cooldownUntil = Date.now() + 60_000;
@@ -427,7 +433,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
         setToast({ type: "success", message: "Offre sauvegardée." });
       }
     } catch (e) {
-      setToast({ type: "error", message: "Erreur lors de la sauvegarde. Réessayez." });
+      setToast({
+        type: "error",
+        message: "Erreur lors de la sauvegarde. Réessayez.",
+      });
     } finally {
       if (toastTimeoutRef.current) {
         window.clearTimeout(toastTimeoutRef.current);
@@ -454,7 +463,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
       );
       setToast({ type: "success", message: "Offre retirée des sauvegardes." });
     } catch (e) {
-      setToast({ type: "error", message: "Erreur lors de la suppression. Réessayez." });
+      setToast({
+        type: "error",
+        message: "Erreur lors de la suppression. Réessayez.",
+      });
     } finally {
       if (toastTimeoutRef.current) {
         window.clearTimeout(toastTimeoutRef.current);
@@ -539,7 +551,8 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
     .map((d) => d.trim())
     .filter(Boolean);
   const targetDeptSet = new Set(targetDepartments);
-  const displayedScore = typeof aiScore === "number" ? aiScore : data.tender.compatibilityScore;
+  const displayedScore =
+    typeof aiScore === "number" ? aiScore : data.tender.compatibilityScore;
 
   return (
     <div className="pb-12">
@@ -602,7 +615,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                   </button>
                   <button
                     onClick={() => setActiveTab("lots")}
-                    className={`px-3 py-1 rounded-lg border transition-colors duration-150 cursor-pointer ${
+                    className={`group px-3 py-1 rounded-lg border transition-colors duration-150 cursor-pointer ${
                       activeTab === "lots"
                         ? "bg-blue-100 dark:bg-blue-900/40 text-primary border-transparent"
                         : "border-slate-200 dark:border-slate-700/50 text-textMuted hover:text-textMain hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -614,9 +627,28 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                       e.currentTarget.classList.remove("bg-slate-100")
                     }
                     aria-pressed={activeTab === "lots"}
+                    aria-describedby="lots-tooltip"
                     title="Voir les lots"
                   >
-                    Lots
+                    <span className="inline-flex items-center gap-1.5">
+                      Lots
+                      <span className="relative inline-flex items-center">
+                        <span
+                          className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900"
+                          aria-hidden="true"
+                        >
+                          ?
+                        </span>
+                        <span
+                          id="lots-tooltip"
+                          role="tooltip"
+                          className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[11px] font-medium text-slate-700 dark:text-slate-200 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                        >
+                          Un lot est une partie distincte de l'appel d'offres.
+                          Vous pouvez répondre à un ou plusieurs lots.
+                        </span>
+                      </span>
+                    </span>
                   </button>
                   <button
                     onClick={() => setActiveTab("intelligence")}
@@ -722,7 +754,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                     >
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-bold text-textMain">
-                          Lot {lot.lotNumber} â€” {lot.title}
+                          Lot {lot.lotNumber} : {lot.title}
                         </div>
                         {lot.cpv && (
                           <span className="text-[11px] px-2 py-0.5 bg-primary/10 text-primary rounded-full">
@@ -750,11 +782,14 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                       <Sparkles size={16} className="text-amber-500" />
                       <h4 className="font-bold text-textMain">Analyse IA</h4>
                     </div>
-              <button
-                onClick={() => handleGenerateStrategy(!!analysis)}
-                disabled={isAnalyzing || (analysis && analysisCooldownUntil !== null)}
-                className="px-3 py-1.5 text-[11px] bg-primary text-white rounded-full hover:bg-blue-600 shadow-sm flex items-center gap-1 disabled:opacity-50"
-              >
+                    <button
+                      onClick={() => handleGenerateStrategy(!!analysis)}
+                      disabled={
+                        isAnalyzing ||
+                        (analysis && analysisCooldownUntil !== null)
+                      }
+                      className="px-3 py-1.5 text-[11px] bg-primary text-white rounded-full hover:bg-blue-600 shadow-sm flex items-center gap-1 disabled:opacity-50"
+                    >
                       {isAnalyzing ? (
                         <Loader2 className="animate-spin" size={12} />
                       ) : analysis ? (
@@ -820,7 +855,10 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                 <div className="border border-slate-200 dark:border-slate-700/50 rounded-2xl p-3 bg-surface shadow-inner">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <MessageSquareText size={16} className="text-purple-500" />
+                      <MessageSquareText
+                        size={16}
+                        className="text-purple-500"
+                      />
                       <h4 className="font-bold text-textMain">Assistant IA</h4>
                     </div>
                   </div>
@@ -851,7 +889,9 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                                 title="Copier la réponse"
                               >
                                 <Copy size={12} />{" "}
-                                {copiedMessageIndex === idx ? "Copié" : "Copier"}
+                                {copiedMessageIndex === idx
+                                  ? "Copié"
+                                  : "Copier"}
                               </button>
                             </div>
                           )}
@@ -973,7 +1013,7 @@ export const TenderDetailScreen: React.FC<TenderDetailScreenProps> = ({
                   })}
                 </div>
               ) : (
-                "â€”"
+                ":"
               )}
             </div>
           </div>

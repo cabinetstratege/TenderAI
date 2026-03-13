@@ -349,6 +349,7 @@ const mapRecordToTender = (record: any, user: UserProfile): Tender => {
   let allLotCpvs: string[] = [];
   try {
     const rawLots = details.OBJET?.LOTS?.LOT;
+
     if (Array.isArray(rawLots)) {
       lots = rawLots.map((l: any) => ({
         lotNumber: l.NUMERO || "?",
@@ -363,6 +364,28 @@ const mapRecordToTender = (record: any, user: UserProfile): Tender => {
         description: rawLots.DESCRIPTION,
         cpv: extractCPVs(rawLots),
       });
+    }
+    if (lots.length === 0) {
+      const rawLotsV2 = details.FNSimple?.initial?.lots?.lot;
+      if (Array.isArray(rawLotsV2)) {
+        lots = rawLotsV2.map((l: any, index: number) => {
+          const cpv = l?.codeCPV?.objetPrincipal?.classPrincipale;
+          return {
+            lotNumber: l?.numero || l?.numeroLot || String(index + 1),
+            title: l?.intitule || l?.description || `Lot ${index + 1}`,
+            description: l?.description || l?.intitule,
+            cpv: cpv ? [cpv] : [],
+          };
+        });
+      } else if (rawLotsV2) {
+        const cpv = rawLotsV2?.codeCPV?.objetPrincipal?.classPrincipale;
+        lots.push({
+          lotNumber: rawLotsV2?.numero || rawLotsV2?.numeroLot || "1",
+          title: rawLotsV2?.intitule || rawLotsV2?.description || "Lot Unique",
+          description: rawLotsV2?.description || rawLotsV2?.intitule,
+          cpv: cpv ? [cpv] : [],
+        });
+      }
     }
     allLotCpvs = lots.flatMap((l) => l.cpv || []);
   } catch (e) {
@@ -476,6 +499,7 @@ export const tenderService = {
         throw new Error(`BOAMP API Error: ${response.statusText}`);
 
       const data = await response.json();
+      console.log("BOAMP data", data);
 
       let tenders: Tender[] = [];
 
@@ -842,6 +866,15 @@ export const tenderService = {
         const params = new URLSearchParams({ limit: "1", where: whereClause });
         const res = await fetch(`${BOAMP_API_URL}?${params.toString()}`);
         const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          const details = JSON.parse(data.results[0].donnees);
+          console.log("BOAMP detail", details);
+          console.log("BOAMP lots (OBJET.LOTS.LOT)", details.OBJET?.LOTS?.LOT);
+          console.log(
+            "BOAMP lots (FNSimple.initial.natureMarche.lotsMarche)",
+            details.FNSimple?.initial?.natureMarche?.lotsMarche,
+          );
+        }
 
         if (data.results && data.results.length > 0) {
           const user = await userService.getCurrentProfile();
