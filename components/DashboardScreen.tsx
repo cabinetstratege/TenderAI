@@ -55,6 +55,7 @@ const DashboardScreen: React.FC<DashboardProps> = ({
     procedureType: "",
     publicationDate: "",
     rawKeywords: "",
+    hasLotsOnly: false,
   });
 
   const [showAdvancedModal, setShowAdvancedModal] = useState(false);
@@ -83,19 +84,27 @@ const DashboardScreen: React.FC<DashboardProps> = ({
   const aiScoresAbortRef = useRef<AbortController | null>(null);
   const aiScoresCacheRef = useRef<Map<string, number>>(new Map());
   const hasAdvancedFilters = useMemo(() => {
+    const hasProfileDepartments = Boolean(
+      userProfile?.targetDepartments?.trim(),
+    );
     return (
       Boolean(filters.selectedRegion) ||
       Boolean(filters.procedureType) ||
       Boolean(filters.publicationDate) ||
       Boolean(filters.rawKeywords) ||
-      Boolean(filters.minBudget && filters.minBudget > 0)
+      Boolean(filters.minBudget && filters.minBudget > 0) ||
+      Boolean(filters.hasLotsOnly) ||
+      hasProfileDepartments
     );
   }, [
+    userProfile?.targetDepartments,
+    userProfile?.scope,
     filters.selectedRegion,
     filters.procedureType,
     filters.publicationDate,
     filters.rawKeywords,
     filters.minBudget,
+    filters.hasLotsOnly,
   ]);
 
   // Load visited status on mount
@@ -385,6 +394,7 @@ const DashboardScreen: React.FC<DashboardProps> = ({
       procedureType: "",
       publicationDate: "",
       rawKeywords: "",
+      hasLotsOnly: false,
     });
     setDebouncedSearchTerm("");
   };
@@ -425,6 +435,9 @@ const DashboardScreen: React.FC<DashboardProps> = ({
         if (filters.minBudget && filters.minBudget > 0) {
           if (!t.estimatedBudget || t.estimatedBudget < filters.minBudget)
             return false;
+        }
+        if (filters.hasLotsOnly) {
+          if (!t.lots || t.lots.length === 0) return false;
         }
 
         return true;
@@ -750,17 +763,41 @@ const DashboardScreen: React.FC<DashboardProps> = ({
                   }
                 />
               </div>
+              <div className="space-y-2">
+                {/* <label className="text-sm font-medium text-textMain">
+                  Lots
+                </label> */}
+                <div className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 bg-background">
+                  <label className="text-sm text-textMain">
+                    Uniquement avec lots
+                  </label>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(filters.hasLotsOnly)}
+                      onChange={() =>
+                        setFilters({
+                          ...filters,
+                          hasLotsOnly: !filters.hasLotsOnly,
+                        })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
+              </div>
             </div>
             <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-2">
               <button
                 onClick={handleResetFilters}
-                className="px-4 py-2 text-slate-500 font-medium hover:text-textMain hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg"
+                className="px-4 py-2 text-slate-500 font-medium hover:text-textMain hover:bg-slate-300 dark:hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
               >
                 Réinitialiser
               </button>
               <button
                 onClick={() => setShowAdvancedModal(false)}
-                className="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20"
+                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-800 shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 cursor-pointer transition-colors"
               >
                 Appliquer
               </button>
@@ -788,20 +825,22 @@ const DashboardScreen: React.FC<DashboardProps> = ({
               ? "Aucun AO ne correspond à  votre recherche via l'API BOAMP."
               : "Vos filtres locaux (Score/Budget) sont trop restrictifs sur les résultats retournés."}
           </p>
-          <button
-            type="button"
-            onClick={() => (window.location.href = "/profile")}
-            className="mt-6 mx-auto max-w-md text-xs text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
-          >
-            Complétez votre profil entreprise (spécialisation, CPV, mots-clés
-            négatifs) pour augmenter vos chances d'avoir des matchs pertinents.
-          </button>
-          <button
-            onClick={handleResetFilters}
-            className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium shadow-lg"
-          >
-            Réinitialiser tous les filtres
-          </button>
+          <div className="mt-6 mx-auto max-w-md space-y-4">
+            <button
+              type="button"
+              onClick={() => (window.location.href = "/profile")}
+              className="w-full text-xs text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+            >
+              Complétez votre profil entreprise (spécialisation, CPV, mots-clés
+              négatifs) pour augmenter vos chances d'avoir des matchs pertinents.
+            </button>
+            <button
+              onClick={handleResetFilters}
+              className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-800 text-textMain rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium shadow-lg"
+            >
+              Réinitialiser tous les filtres
+            </button>
+          </div>
         </div>
       ) : (
         <>

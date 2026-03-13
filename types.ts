@@ -19,6 +19,7 @@ export interface DashboardFilters {
   procedureType?: string;
   publicationDate?: string;
   rawKeywords?: string;
+  hasLotsOnly?: boolean;
 }
 
 export interface UserProfile {
