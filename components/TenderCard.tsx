@@ -22,6 +22,7 @@ interface TenderCardProps {
   onStatusChange: (tender: Tender, status: TenderStatus) => void;
   isVisited?: boolean;
   onOpenTender?: (id: string) => void;
+  isRemoving?: boolean;
 }
 
 const TenderCard: React.FC<TenderCardProps> = ({
@@ -30,6 +31,7 @@ const TenderCard: React.FC<TenderCardProps> = ({
   onStatusChange,
   isVisited = false,
   onOpenTender,
+  isRemoving = false,
 }) => {
   const formatDeadline = (value?: string) => {
     if (!value) return "Date non disponible";
@@ -101,7 +103,9 @@ const TenderCard: React.FC<TenderCardProps> = ({
         isVisited
           ? "opacity-80 grayscale-[0.2] border-slate-200 dark:border-slate-700 hover:opacity-100 hover:grayscale-0"
           : "border-slate-200 dark:border-slate-700 hover:border-primary/30 dark:hover:border-blue-500/30 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 dark:hover:shadow-blue-500/10"
-      } hover:-translate-y-1`}
+      } hover:-translate-y-1 ${
+        isRemoving ? "opacity-0 -translate-x-6 pointer-events-none" : ""
+      }`}
     >
       {/* Top Gradient Line on Hover */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>

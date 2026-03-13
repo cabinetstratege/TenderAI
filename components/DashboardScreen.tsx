@@ -83,6 +83,8 @@ const DashboardScreen: React.FC<DashboardProps> = ({
   const [aiScores, setAiScores] = useState<Record<string, number>>({});
   const aiScoresAbortRef = useRef<AbortController | null>(null);
   const aiScoresCacheRef = useRef<Map<string, number>>(new Map());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const removalTimeoutsRef = useRef<Record<string, number>>({});
   const hasAdvancedFilters = useMemo(() => {
     const hasProfileDepartments = Boolean(
       userProfile?.targetDepartments?.trim(),
@@ -370,7 +372,23 @@ const DashboardScreen: React.FC<DashboardProps> = ({
 
   const handleStatusChange = async (tender: Tender, status: TenderStatus) => {
     if (status === TenderStatus.BLACKLISTED || status === TenderStatus.SAVED) {
-      setAuthorizedTenders((prev) => prev.filter((t) => t.id !== tender.id));
+      setRemovingIds((prev) => {
+        const next = new Set(prev);
+        next.add(tender.id);
+        return next;
+      });
+      if (removalTimeoutsRef.current[tender.id]) {
+        window.clearTimeout(removalTimeoutsRef.current[tender.id]);
+      }
+      removalTimeoutsRef.current[tender.id] = window.setTimeout(() => {
+        setAuthorizedTenders((prev) => prev.filter((t) => t.id !== tender.id));
+        setRemovingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tender.id);
+          return next;
+        });
+        delete removalTimeoutsRef.current[tender.id];
+      }, 600);
     }
     await tenderService.updateInteraction(tender.id, status, undefined, tender);
   };
@@ -856,6 +874,7 @@ const DashboardScreen: React.FC<DashboardProps> = ({
                   onStatusChange={handleStatusChange}
                   isVisited={visitedIds.includes(tender.id)}
                   onOpenTender={(id) => onOpenTender(id)}
+                  isRemoving={removingIds.has(tender.id)}
                 />
               </div>
             ))}

@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext";
 import NotificationCenter from "./NotificationCenter";
 import TrialTimer from "./TrialTimer";
 import PaywallModal from "./PaywallModal";
+import { tenderService } from "../services/tenderService";
+import { TenderStatus } from "../types";
 import {
   LayoutDashboard,
   Briefcase,
@@ -32,6 +34,7 @@ const NavItem = ({
   label,
   className,
   activeClassName,
+  badgeCount,
   id,
 }: {
   href: string;
@@ -39,6 +42,7 @@ const NavItem = ({
   label: string;
   className?: string;
   activeClassName?: string;
+  badgeCount?: number;
   id?: string;
 }) => {
   const pathname = usePathname();
@@ -65,6 +69,11 @@ const NavItem = ({
         className={`relative z-10 transition-transform duration-300 ${isActive ? "scale-110" : "group-hover:scale-110"}`}
       />
       <span className="font-medium relative z-10">{label}</span>
+      {typeof badgeCount === "number" && badgeCount > 0 && (
+        <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 font-semibold dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900/50">
+          {badgeCount}
+        </span>
+      )}
       {isActive && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full"></div>
       )}
@@ -78,6 +87,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [isTrialExpired, setIsTrialExpired] = useState(false);
+  const [todoCount, setTodoCount] = useState(0);
 
   useEffect(() => {
     if (profile?.subscriptionStatus === "Expired") {
@@ -86,6 +96,48 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
       setIsTrialExpired(false);
     }
   }, [profile]);
+
+  useEffect(() => {
+    let isMounted = true;
+    let intervalId: number | null = null;
+
+    const loadTodoCount = async () => {
+      try {
+        const saved = await tenderService.getSavedTenders();
+        const count = saved.filter(
+          (item) =>
+            item.interaction?.status === TenderStatus.TODO ||
+            item.interaction?.status === TenderStatus.SAVED,
+        ).length;
+        if (isMounted) setTodoCount(count);
+      } catch {
+        if (isMounted) setTodoCount(0);
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadTodoCount();
+      }
+    };
+    const handleInteractionUpdate = () => {
+      loadTodoCount();
+    };
+
+    loadTodoCount();
+    intervalId = window.setInterval(loadTodoCount, 30000);
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("tenderai:interaction-updated", handleInteractionUpdate as EventListener);
+
+    return () => {
+      isMounted = false;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+      }
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("tenderai:interaction-updated", handleInteractionUpdate as EventListener);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await userService.resetLocalUser();
@@ -153,6 +205,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
             href="/mes-opportunites"
             icon={Briefcase}
             label="Mes Opportunités"
+            badgeCount={todoCount}
             id="tour-sidebar-tenders"
           />
           <NavItem href="/stats" icon={BarChart2} label="Statistiques" />
@@ -276,6 +329,7 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
             href="/mes-opportunites"
                 icon={Briefcase}
                 label="Mes Appels d'Offres"
+                badgeCount={todoCount}
               />
             </div>
             <div onClick={() => setIsMobileMenuOpen(false)}>
@@ -336,3 +390,8 @@ const LayoutNext: React.FC<LayoutProps> = ({ children }) => {
 };
 
 export default LayoutNext;
+
+
+
+
+

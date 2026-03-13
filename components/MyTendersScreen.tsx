@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { tenderService } from '../services/tenderService';
 import { TenderStatus, Tender, UserInteraction } from '../types';
-import { Loader2, ArrowRight, ArrowLeft, Ban, X, AlertCircle, CheckCircle, BrainCircuit } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Ban, X, AlertCircle, CheckCircle, BrainCircuit, ClipboardList } from 'lucide-react';
 import RefreshButton from './RefreshButton';
 
 type MyTendersScreenProps = {
@@ -20,7 +20,7 @@ interface KanbanCardProps {
   disableClick?: boolean;
 }
 
-const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange, onNavigateTender, onDragStart, onDragEnd, disableClick }) => {
+  const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChange, onNavigateTender, onDragStart, onDragEnd, disableClick }) => {
   const daysRemaining = Math.ceil((new Date(item.tender.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   const isDeadlineValid = Number.isFinite(daysRemaining);
 
@@ -29,6 +29,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
       className="bg-surface p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-md hover:border-slate-400 dark:hover:border-slate-600 transition-all flex flex-col gap-3 group relative cursor-grab active:cursor-grabbing"
       draggable
       onDragStart={(e) => {
+        const target = e.target as HTMLElement | null;
+        if (target?.closest("button") || target?.closest("a")) {
+          e.preventDefault();
+          return;
+        }
         e.dataTransfer.setData('text/plain', item.tender.id);
         e.dataTransfer.effectAllowed = 'move';
         onDragStart?.(item.tender.id, item.interaction.status);
@@ -63,6 +68,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
           e.stopPropagation();
           onNavigateTender?.(item.tender.id);
         }}
+        onMouseDown={(e) => e.stopPropagation()}
         className="font-semibold text-sm text-slate-800 dark:text-slate-200 line-clamp-2 text-left hover:text-primary transition-colors"
       >
         {item.tender.title}
@@ -83,6 +89,7 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
 
       <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700 mt-auto">
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onStatusChange(item.tender.id, TenderStatus.BLACKLISTED);
@@ -96,8 +103,9 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
         <div className="flex gap-1">
           {item.interaction.status !== TenderStatus.TODO && (
             <button
-              onClickCapture={(e) => e.stopPropagation()}
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 const prev =
                   item.interaction.status === TenderStatus.IN_PROGRESS
                     ? TenderStatus.TODO
@@ -115,8 +123,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
 
           {item.interaction.status === TenderStatus.TODO && (
             <button
-              onClickCapture={(e) => e.stopPropagation()}
-              onClick={() => onStatusChange(item.tender.id, TenderStatus.IN_PROGRESS)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(item.tender.id, TenderStatus.IN_PROGRESS);
+              }}
               className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors cursor-pointer"
               title="Passer en rédaction"
             >
@@ -125,8 +136,11 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
           )}
           {item.interaction.status === TenderStatus.IN_PROGRESS && (
             <button
-              onClickCapture={(e) => e.stopPropagation()}
-              onClick={() => onStatusChange(item.tender.id, TenderStatus.SUBMITTED)}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(item.tender.id, TenderStatus.SUBMITTED);
+              }}
               className="p-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-primary text-slate-500 dark:text-slate-300 hover:text-white rounded transition-colors cursor-pointer"
               title="Marquer comme soumise"
             >
@@ -136,16 +150,22 @@ const KanbanCard: React.FC<KanbanCardProps> = ({ item, onNoteClick, onStatusChan
           {item.interaction.status === TenderStatus.SUBMITTED && (
             <div className="flex gap-1">
               <button
-                onClickCapture={(e) => e.stopPropagation()}
-                onClick={() => onStatusChange(item.tender.id, TenderStatus.WON)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(item.tender.id, TenderStatus.WON);
+                }}
                 className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 hover:bg-emerald-600 text-emerald-600 dark:text-emerald-400 hover:text-white rounded border border-emerald-200 dark:border-emerald-900/50 cursor-pointer"
                 title="Marquer comme gagné"
               >
                 <CheckCircle size={14} />
               </button>
               <button
-                onClickCapture={(e) => e.stopPropagation()}
-                onClick={() => onStatusChange(item.tender.id, TenderStatus.LOST)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStatusChange(item.tender.id, TenderStatus.LOST);
+                }}
                 className="p-1.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-600 text-red-600 dark:text-red-400 hover:text-white rounded border border-red-200 dark:border-red-900/50 cursor-pointer"
                 title="Marquer comme perdu"
               >
@@ -272,7 +292,8 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             onNavigateTender={onNavigateTender}
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
-            icon={<CheckCircle size={16} className="text-slate-500" />}
+            icon={<ClipboardList size={16} className="text-amber-600 dark:text-amber-300" />}
+            badgeClass="bg-amber-200 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-900/50"
             onCardDragStart={handleDragStart}
             onCardDragEnd={handleDragEnd}
             onDropItem={handleDropOnColumn}
@@ -312,6 +333,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
             icon={<ArrowRight size={16} className="text-purple-500" />}
+            badgeClass="bg-purple-200 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-900/50"
             onCardDragStart={handleDragStart}
             onCardDragEnd={handleDragEnd}
             onDropItem={handleDropOnColumn}
@@ -331,6 +353,7 @@ const MyTendersScreen: React.FC<MyTendersScreenProps> = ({ onNavigateTender }) =
             colorClass="bg-slate-100 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50 opacity-80"
             headerClass="bg-slate-200 dark:bg-slate-900/50"
             icon={<CheckCircle size={16} className="text-emerald-500" />}
+            badgeClass="bg-emerald-200 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-900/50"
             onCardDragStart={handleDragStart}
             onCardDragEnd={handleDragEnd}
             onDropItem={handleDropOnColumn}
@@ -452,3 +475,6 @@ const KanbanColumn = ({
 );
 
 export default MyTendersScreen;
+
+
+

@@ -221,6 +221,11 @@ const writeAIScoreMap = (userId: string, map: Record<string, number>) => {
   }
 };
 
+const emitInteractionUpdate = () => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("tenderai:interaction-updated"));
+};
+
 const getCachedAIScore = (userId: string, idWeb: string): number | null => {
   if (!userId || !idWeb) return null;
   const map = readAIScoreMap(userId);
@@ -792,6 +797,7 @@ export const tenderService = {
         } as any);
       }
       localStorage.setItem("demo_interactions", JSON.stringify(interactions));
+      emitInteractionUpdate();
       return;
     }
 
@@ -813,6 +819,7 @@ export const tenderService = {
       .upsert(payload, { onConflict: "user_id,tender_id" });
 
     if (error) console.error("Supabase update error", error);
+    if (!error) emitInteractionUpdate();
   },
   deleteInteraction: async (tenderId: string): Promise<void> => {
     if (userService.isDemoMode()) {
@@ -822,6 +829,7 @@ export const tenderService = {
         : MOCK_INTERACTIONS.map((i) => i.interaction);
       const filtered = interactions.filter((i) => i.tenderId !== tenderId);
       localStorage.setItem("demo_interactions", JSON.stringify(filtered));
+      emitInteractionUpdate();
       return;
     }
 
@@ -838,6 +846,7 @@ export const tenderService = {
       .eq("tender_id", tenderId);
 
     if (error) console.error("Supabase delete error", error);
+    if (!error) emitInteractionUpdate();
   },
 
   getTenderById: async (
